@@ -1,3 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* カラー確認用　使っていない */
 aaa {
   background-color: rgb(41, 195, 41);
 }
