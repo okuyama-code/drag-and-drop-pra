@@ -15,11 +15,11 @@ interface Tour {
 }
 
 const initialOperationData: OperationData[] = [
-  { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T15:00:00'), car_model: 'xx' },
+  { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T12:00:00'), car_model: 'xx' },
   { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00'), car_model: 'yy' },
   { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00'), car_model: 'xx' },
-  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T17:00:00'), car_model: 'yy' },
-  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T18:00:00'), endTime: new Date('2024-04-20T19:00:00'), car_model: 'xx' },
+  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T18:00:00'), car_model: 'yy' },
+  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T17:00:00'), endTime: new Date('2024-04-20T20:00:00'), car_model: 'xx' },
 ];
 
 const initialTours: Tour[] = [
@@ -170,7 +170,7 @@ const DragAndDropList: React.FC = () => {
               <div
                 style={{
                   position: 'relative',
-                  height: '100px',
+                  height: '60px',
                   border: '2px dashed #ccc',
                   borderRadius: '5px',
                   marginTop: '10px',
@@ -212,7 +212,7 @@ const DragAndDropList: React.FC = () => {
                         onDragStart={e => handleDragStart(e, operation.id, true)}
                         onClick={() => handleRemoveFromTour(tour.id, operation.id)}
                       >
-                        {`${operation.startTime.toLocaleTimeString()} - ${operation.endTime.toLocaleTimeString()}`}
+                        {`${operation.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${operation.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                       </div>
                     );
                   })
