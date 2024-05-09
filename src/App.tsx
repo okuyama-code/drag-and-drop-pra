@@ -33,6 +33,7 @@ const DragAndDropList: React.FC = () => {
   const [operations, setOperations] = useState<OperationData[]>([]);
   const [tours, setTours] = useState<Tour[]>(initialTours);
   const [tourCount, setTourCount] = useState<number>(5);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number, isTour: boolean) => {
     event.dataTransfer.setData('operationId', id.toString());
@@ -85,10 +86,10 @@ const DragAndDropList: React.FC = () => {
     setTourCount(prevCount => prevCount + 1);
   };
 
-  const handleDeleteTour = (tourId: number) => {
-    const updatedTours = tours.filter(tour => tour.id !== tourId);
-    setTours(updatedTours);
-  };
+  // const handleDeleteTour = (tourId: number) => {
+  //   const updatedTours = tours.filter(tour => tour.id !== tourId);
+  //   setTours(updatedTours);
+  // };
 
   const renderTimeBlocks = () => {
     const timeBlocks = [];
@@ -116,83 +117,85 @@ const DragAndDropList: React.FC = () => {
     groupedOperations[key].push(operation);
   });
 
+  function formatDate(date: Date) {
+    const year = date.getFullYear();
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const day = ('0' + date.getDate()).slice(-2);
+    return `${year}年${month}月${day}日`;
+  }
+
   return (
     <>
-      <div style={{ display: 'flex' }}>
-        <div style={{ flexGrow: 1, display: 'flex' }}>
+      <div className="flex">
+        <div className="flex flex-grow">
           {/* =============== sidebar ===================== */}
-          <div style={{ width: "150px", marginRight: '20px' }}>
-            {tours.map(tour => (
-              <div key={tour.id} style={{ marginBottom: '20px' }}>
-                <button onClick={() => handleAddTour(tour.date)}>Add Tour</button>
-              </div>
-            ))}
+          <div className="w-40 mr-5">
+           sidebar
           </div>
           {/* =============== sidebar ===================== */}
 
           {/* ================== main ===================== */}
-          <div style={{ flexGrow: 1 }}>
-            <div style={{ backgroundColor: "rgb(41, 195, 41)", padding: "10px 30px", color: "white", margin: "10px 0" }}>
-                <span style={{ marginRight: '10px' }}>{tours[0].date.toLocaleDateString()}</span>
+          <div className="flex-grow">
+            <div className="bg-green-500 text-white py-4 px-6 my-2">
+              <span className="mr-2">{formatDate(tours[0].date)}</span>
+            </div>
+            <div className="flex justify-end mr-10 mb-4 text-white">
+              <div>
+                <button
+                  className={`px-3 py-2 rounded-md ${isEditMode ? 'bg-red-500' : 'bg-blue-400'}`}
+                  onClick={() => setIsEditMode(!isEditMode)}
+                >
+                  {isEditMode ? '編集を終了する' : '編集する'}
+                </button>
+                {isEditMode ? (
+                  <button
+                    className="ml-3 px-3 py-2 bg-blue-400 rounded-md"
+                    onClick={() => handleAddTour(tours[0].date)}
+                  >
+                    ツアーを追加
+                  </button>
+                ) : (
+                  ''
+                )}
               </div>
-            <div style={{ display: 'flex' }}>
-              <div style={{ width: '70px' }}></div>
-              <div style={{ flexGrow: 1, position: 'relative', height: '50px', display: 'flex', alignItems: 'center' }}>
+            </div>
+            <div className="flex">
+              <div className="w-16"></div>
+              <div className="flex-grow relative h-12 flex items-center">
                 {renderTimeBlocks()}
               </div>
             </div>
             {tours.map(tour => (
               <div
                 key={tour.id}
-                style={{ display: 'flex', marginBottom: '20px' }}
+                className="flex mb-5"
               >
-                <div style={{ width: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="w-16 flex items-center justify-center">
                   <span>ツアー {tour.id}</span>
                 </div>
                 <div
                   onDrop={e => handleDrop(e, tour.id)}
                   onDragOver={handleDragOver}
-                  style={{
-                    flexGrow: 1,
-                    position: 'relative',
-                    height: '60px',
-                    border: '2px dashed #ccc',
-                    borderRadius: '5px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: '#f8f9fa',
-                  }}
+                  className="flex-grow relative h-16 border-2 border-dashed border-gray-300 rounded-md flex justify-center items-center bg-gray-100"
                 >
                   {tour.operations.length === 0 ? (
-                    <p style={{ color: '#999' }}>Drag and drop operations here</p>
+                    <p className="text-gray-500">Drag and drop operations here</p>
                   ) : (
                     tour.operations.map(operation => {
                       const operationDuration = operation.endTime.getTime() - operation.startTime.getTime();
                       const operationStartTimePercentage = (operation.startTime.getHours() * 60 + operation.startTime.getMinutes()) / (24 * 60) * 100;
                       const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
-                      const backgroundColor = operation.car_model === 'xx' ? 'rgb(0, 123, 255, 0.8)' : 'rgba(218, 136, 13, 0.8)';
+                      const backgroundColor = operation.car_model === 'xx' ? 'rgba(0, 123, 255, 0.8)' : 'rgba(218, 136, 13, 0.8)';
                       return (
                         <div
                           key={operation.id}
+                          className="absolute text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center h-full"
                           style={{
-                            position: 'absolute',
                             left: `${operationStartTimePercentage}%`,
                             width: `${operationWidthPercentage}%`,
-                            background: backgroundColor,
-                            color: '#fff',
-                            borderRadius: '5px',
-                            boxShadow: '0 0 3px rgba(0,0,0,0.3)',
-                            overflow: 'hidden',
-                            whiteSpace: 'nowrap',
-                            textOverflow: 'ellipsis',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            height: '100%',
+                            backgroundColor,
                           }}
-                          draggable
+                          draggable={isEditMode}
                           onDragStart={e => handleDragStart(e, operation.id, true)}
                         >
                           {`${operation.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${operation.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
