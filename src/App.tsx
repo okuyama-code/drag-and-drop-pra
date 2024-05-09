@@ -17,12 +17,21 @@ const initialOperationData: OperationData[] = [
   { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T10:00:00') },
   { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00') },
   { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00') },
+  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T17:00:00') },
+  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T18:00:00'), endTime: new Date('2024-04-20T19:00:00') },
+];
+
+const initialTours: Tour[] = [
+  { id: 1, date: new Date('2024-04-19'), operations: [initialOperationData[0], initialOperationData[1]] },
+  { id: 2, date: new Date('2024-04-19'), operations: [initialOperationData[2]] },
+  { id: 3, date: new Date('2024-04-19'), operations: [initialOperationData[3]] },
+  { id: 4, date: new Date('2024-04-19'), operations: [initialOperationData[4]] },
 ];
 
 const DragAndDropList: React.FC = () => {
-  const [operations, setOperations] = useState<OperationData[]>(initialOperationData);
-  const [tours, setTours] = useState<Tour[]>([]);
-  const [tourCount, setTourCount] = useState<number>(1);
+  const [operations, setOperations] = useState<OperationData[]>([]);
+  const [tours, setTours] = useState<Tour[]>(initialTours);
+  const [tourCount, setTourCount] = useState<number>(5);
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number, isTour: boolean) => {
     event.dataTransfer.setData('operationId', id.toString());
@@ -74,6 +83,7 @@ const DragAndDropList: React.FC = () => {
 
       setOperations(updatedOperations);
       setTours(updatedTours);
+      console.log(tours)
     }
   };
 
@@ -121,17 +131,17 @@ const DragAndDropList: React.FC = () => {
     return timeBlocks;
   };
 
-  // 年月日ごとに操作をグループ化する
-  const groupedOperations: { [date: string]: OperationData[] } = {};
-  operations.forEach(operation => {
-    const key = operation.date.toDateString();
-    if (!groupedOperations[key]) {
-      groupedOperations[key] = [];
-    }
-    groupedOperations[key].push(operation);
-  });
+   // 年月日ごとに操作をグループ化する
+   const groupedOperations: { [date: string]: OperationData[] } = {};
+   operations.forEach(operation => {
+     const key = operation.date.toDateString();
+     if (!groupedOperations[key]) {
+       groupedOperations[key] = [];
+     }
+     groupedOperations[key].push(operation);
+   });
 
-  return (
+   return (
     <>
       <div style={{ display: 'flex' }}>
 
@@ -155,12 +165,13 @@ const DragAndDropList: React.FC = () => {
         </div>
 
         <div style={{ flexGrow: 1 }}>
-        <div style={{ position: 'relative', height: '50px', display: 'flex', alignItems: 'center' }}>
-          {renderTimeBlocks()}
-        </div>
+          <div style={{ position: 'relative', height: '50px', display: 'flex', alignItems: 'center' }}>
+            {renderTimeBlocks()}
+          </div>
           {tours.map(tour => (
             <div key={tour.id} style={{ marginBottom: '20px', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                <h3>Tour {tour.id}</h3>
                 <button onClick={() => handleDeleteTour(tour.id)}>Delete Tour</button>
               </div>
               <div
