@@ -52,16 +52,8 @@ const DragAndDropList: React.FC = () => {
 
       const updatedTours = [...tours];
       const movedOperation = updatedTours[tourIndex].operations[operationIndex];
-      const startTimePercentage = (event.nativeEvent.offsetX / event.currentTarget.clientWidth) * 100;
-      const startHour = Math.floor((startTimePercentage / 100) * 24);
-      const startMinute = Math.round((((startTimePercentage / 100) * 24) % 1) * 60);
-      const endTime = new Date(movedOperation.startTime.getTime() + (movedOperation.endTime.getTime() - movedOperation.startTime.getTime()));
-      const updatedOperation = {
-        ...movedOperation,
-        startTime: new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), startHour, startMinute),
-        endTime: new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), endTime.getHours(), endTime.getMinutes()),
-      };
-      updatedTours[tourIndex].operations[operationIndex] = updatedOperation;
+      updatedTours[tourIndex].operations.splice(operationIndex, 1);
+      updatedTours[tourIndex].operations.push(movedOperation);
       setTours(updatedTours);
     } else {
       const operationIndex = operations.findIndex(op => op.id === operationId);
@@ -77,13 +69,10 @@ const DragAndDropList: React.FC = () => {
       const movedOperation = updatedOperations.splice(operationIndex, 1)[0];
 
       const updatedTours = [...tours];
-      const movedOperations = { ...movedOperation, startTime: new Date(tourDate.toDateString() + ' ' + movedOperation.startTime.toTimeString()), endTime: new Date(tourDate.toDateString() + ' ' + movedOperation.endTime.toTimeString()) };
-
-      updatedTours[tourIndex].operations.push(movedOperations);
+      updatedTours[tourIndex].operations.push(movedOperation);
 
       setOperations(updatedOperations);
       setTours(updatedTours);
-      console.log(tours)
     }
   };
 
@@ -131,17 +120,17 @@ const DragAndDropList: React.FC = () => {
     return timeBlocks;
   };
 
-   // 年月日ごとに操作をグループ化する
-   const groupedOperations: { [date: string]: OperationData[] } = {};
-   operations.forEach(operation => {
-     const key = operation.date.toDateString();
-     if (!groupedOperations[key]) {
-       groupedOperations[key] = [];
-     }
-     groupedOperations[key].push(operation);
-   });
+  // 年月日ごとに操作をグループ化する
+  const groupedOperations: { [date: string]: OperationData[] } = {};
+  operations.forEach(operation => {
+    const key = operation.date.toDateString();
+    if (!groupedOperations[key]) {
+      groupedOperations[key] = [];
+    }
+    groupedOperations[key].push(operation);
+  });
 
-   return (
+  return (
     <>
       <div style={{ display: 'flex' }}>
 
