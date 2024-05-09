@@ -5,6 +5,7 @@ interface OperationData {
   date: Date; // 年月日を表すプロパティを追加
   startTime: Date;
   endTime: Date;
+  car_model: string;
 }
 
 interface Tour {
@@ -14,11 +15,11 @@ interface Tour {
 }
 
 const initialOperationData: OperationData[] = [
-  { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T10:00:00') },
-  { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00') },
-  { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00') },
-  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T17:00:00') },
-  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T18:00:00'), endTime: new Date('2024-04-20T19:00:00') },
+  { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T15:00:00'), car_model: 'xx' },
+  { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00'), car_model: 'yy' },
+  { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00'), car_model: 'xx' },
+  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T17:00:00'), car_model: 'yy' },
+  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T18:00:00'), endTime: new Date('2024-04-20T19:00:00'), car_model: 'xx' },
 ];
 
 const initialTours: Tour[] = [
@@ -38,29 +39,26 @@ const DragAndDropList: React.FC = () => {
     event.dataTransfer.setData('isTour', isTour.toString());
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number, tourDate: Date) => {
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number) => {
     event.preventDefault();
     const operationId = Number(event.dataTransfer.getData('operationId'));
     const isTour = event.dataTransfer.getData('isTour') === 'true';
 
     if (isTour) {
-      const tourIndex = tours.findIndex(t => t.id === tourId);
-      if (tourIndex === -1) return;
+      const sourceTourIndex = tours.findIndex(t => t.operations.some(op => op.id === operationId));
+      if (sourceTourIndex === -1) return;
 
-      const operationIndex = tours[tourIndex].operations.findIndex(op => op.id === operationId);
-      if (operationIndex === -1) return;
+      const destinationTourIndex = tours.findIndex(t => t.id === tourId);
+      if (destinationTourIndex === -1) return;
 
       const updatedTours = [...tours];
-      const movedOperation = updatedTours[tourIndex].operations[operationIndex];
-      updatedTours[tourIndex].operations.splice(operationIndex, 1);
-      updatedTours[tourIndex].operations.push(movedOperation);
+      const operationIndex = updatedTours[sourceTourIndex].operations.findIndex(op => op.id === operationId);
+      const movedOperation = updatedTours[sourceTourIndex].operations.splice(operationIndex, 1)[0];
+      updatedTours[destinationTourIndex].operations.push(movedOperation);
       setTours(updatedTours);
     } else {
       const operationIndex = operations.findIndex(op => op.id === operationId);
       if (operationIndex === -1) return;
-
-      const operation = operations[operationIndex];
-      if (operation.date.toDateString() !== tourDate.toDateString()) return; // 開始日が違う操作は追加しない
 
       const tourIndex = tours.findIndex(t => t.id === tourId);
       if (tourIndex === -1) return;
@@ -75,6 +73,7 @@ const DragAndDropList: React.FC = () => {
       setTours(updatedTours);
     }
   };
+
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -158,14 +157,17 @@ const DragAndDropList: React.FC = () => {
             {renderTimeBlocks()}
           </div>
           {tours.map(tour => (
-            <div key={tour.id} style={{ marginBottom: '20px', position: 'relative' }}>
+            <div
+              key={tour.id}
+              onDrop={e => handleDrop(e, tour.id)}
+              onDragOver={handleDragOver}
+              style={{ marginBottom: '20px', position: 'relative' }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                 <h3>Tour {tour.id}</h3>
                 <button onClick={() => handleDeleteTour(tour.id)}>Delete Tour</button>
               </div>
               <div
-                onDrop={e => handleDrop(e, tour.id, tour.date)}
-                onDragOver={handleDragOver}
                 style={{
                   position: 'relative',
                   height: '100px',
@@ -177,7 +179,7 @@ const DragAndDropList: React.FC = () => {
                   alignItems: 'center',
                   backgroundColor: '#f8f9fa',
                 }}
-              >
+                >
                 {tour.operations.length === 0 ? (
                   <p style={{ color: '#999' }}>Drag and drop operations here</p>
                 ) : (
@@ -185,6 +187,7 @@ const DragAndDropList: React.FC = () => {
                     const operationDuration = operation.endTime.getTime() - operation.startTime.getTime();
                     const operationStartTimePercentage = (operation.startTime.getHours() * 60 + operation.startTime.getMinutes()) / (24 * 60) * 100;
                     const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
+                    const backgroundColor = operation.car_model === 'xx' ? 'rgb(0, 123, 255, 0.8)' : 'rgba(218, 136, 13, 0.8)';
                     return (
                       <div
                         key={operation.id}
@@ -192,9 +195,8 @@ const DragAndDropList: React.FC = () => {
                           position: 'absolute',
                           left: `${operationStartTimePercentage}%`,
                           width: `${operationWidthPercentage}%`,
-                          background: '#007bff',
+                          background: backgroundColor,
                           color: '#fff',
-                          padding: '10px',
                           borderRadius: '5px',
                           boxShadow: '0 0 3px rgba(0,0,0,0.3)',
                           overflow: 'hidden',
