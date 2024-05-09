@@ -79,19 +79,6 @@ const DragAndDropList: React.FC = () => {
     event.preventDefault();
   };
 
-  const handleRemoveFromTour = (tourId: number, operationId: number) => {
-    const tourIndex = tours.findIndex(t => t.id === tourId);
-    if (tourIndex === -1) return;
-
-    const operationIndex = tours[tourIndex].operations.findIndex(op => op.id === operationId);
-    if (operationIndex === -1) return;
-
-    const removedOperation = tours[tourIndex].operations.splice(operationIndex, 1)[0];
-    setTours([...tours]);
-
-    setOperations([...operations, removedOperation]);
-  };
-
   const handleAddTour = (date: Date) => {
     const newTour: Tour = { id: tourCount, date, operations: [] }; // ツアーに年月日を追加
     setTours([...tours, newTour]);
@@ -132,99 +119,60 @@ const DragAndDropList: React.FC = () => {
   return (
     <>
       <div style={{ display: 'flex' }}>
-
-        <div style={{ display: 'flex', flexDirection: 'column', marginRight: '10px', borderBottom: '1px solid #ccc' }}>
-          {Object.entries(groupedOperations).map(([date, ops]) => (
-            <div key={date} style={{ marginBottom: '20px' }}>
-              <h2>{date}</h2>
-              {ops.map(operation => (
-                <div
-                  key={operation.id}
-                  draggable
-                  onDragStart={e => handleDragStart(e, operation.id, false)}
-                  style={{ margin: '5px 0', padding: '5px', border: '1px solid #ccc', borderRadius: '5px' }}
-                >
-                  Operation: {operation.startTime.toLocaleTimeString()} - {operation.endTime.toLocaleTimeString()}
-                </div>
-              ))}
-              <button onClick={() => handleAddTour(new Date(date))}>Add Tour</button>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ flexGrow: 1 }}>
-          <div style={{ position: 'relative', height: '50px', display: 'flex', alignItems: 'center' }}>
-            {renderTimeBlocks()}
-          </div>
-          {tours.map(tour => (
-            <div
-              key={tour.id}
-              onDrop={e => handleDrop(e, tour.id)}
-              onDragOver={handleDragOver}
-              style={{ marginBottom: '20px', position: 'relative' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                <h3>Tour {tour.id}</h3>
+        <div style={{ flexGrow: 1, display: 'flex' }}>
+          <div style={{ marginRight: '20px' }}>
+            {tours.map(tour => (
+              <div key={tour.id} style={{ marginBottom: '20px' }}>
+                <button onClick={() => handleAddTour(tour.date)}>Add Tour</button>
                 <button onClick={() => handleDeleteTour(tour.id)}>Delete Tour</button>
               </div>
-              <div
-                style={{
-                  position: 'relative',
-                  height: '60px',
-                  border: '2px dashed #ccc',
-                  borderRadius: '5px',
-                  marginTop: '10px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: '#f8f9fa',
-                }}
-                >
-                {tour.operations.length === 0 ? (
-                  <p style={{ color: '#999' }}>Drag and drop operations here</p>
-                ) : (
-                  tour.operations.map(operation => {
-                    const operationDuration = operation.endTime.getTime() - operation.startTime.getTime();
-                    const operationStartTimePercentage = (operation.startTime.getHours() * 60 + operation.startTime.getMinutes()) / (24 * 60) * 100;
-                    const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
-                    const backgroundColor = operation.car_model === 'xx' ? 'rgb(0, 123, 255, 0.8)' : 'rgba(218, 136, 13, 0.8)';
-                    return (
-                      <div
-                        key={operation.id}
-                        style={{
-                          position: 'absolute',
-                          left: `${operationStartTimePercentage}%`,
-                          width: `${operationWidthPercentage}%`,
-                          background: backgroundColor,
-                          color: '#fff',
-                          borderRadius: '5px',
-                          boxShadow: '0 0 3px rgba(0,0,0,0.3)',
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                          textOverflow: 'ellipsis',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          height: '100%',
-                        }}
-                        draggable
-                        onDragStart={e => handleDragStart(e, operation.id, true)}
-                        onClick={() => handleRemoveFromTour(tour.id, operation.id)}
-                      >
-                        {`${operation.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${operation.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                      </div>
-                    );
-                  })
-                )}
+            ))}
+          </div>
+          <div style={{ flexGrow: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ backgroundColor: "rgb(41, 195, 41)", padding: "10px 30px", color: "white", margin: "5px" }}>
+                <span style={{ marginRight: '10px' }}>{tours[0].date.toLocaleDateString()}</span>
               </div>
+              <div style={{ display: 'flex' }}>
+                <div style={{ width: '70px' }}></div>
+                <div style={{ flexGrow: 1, position: 'relative', height: '50px', display: 'flex', alignItems: 'center' }}>
+                  {renderTimeBlocks()}
+                </div>
+              </div>
+              {tours.map(tour => (
+                <div
+                  key={tour.id}
+                  style={{ display: 'flex', marginBottom: '20px' }}
+                >
+                  <div style={{ width: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span>ツアー {tour.id}</span>
+                  </div>
+                  <div
+                    onDrop={e => handleDrop(e, tour.id)}
+                    onDragOver={handleDragOver}
+                    style={{
+                      flexGrow: 1,
+                      position: 'relative',
+                      height: '60px',
+                      border: '2px dashed #ccc',
+                      borderRadius: '5px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: '#f8f9fa',
+                    }}
+                  >
+                    {/* ... */}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-
       </div>
     </>
   );
+
 };
 
 export default DragAndDropList;
