@@ -120,54 +120,92 @@ const DragAndDropList: React.FC = () => {
     <>
       <div style={{ display: 'flex' }}>
         <div style={{ flexGrow: 1, display: 'flex' }}>
-          <div style={{ marginRight: '20px' }}>
+          {/* =============== sidebar ===================== */}
+          <div style={{ width: "150px", marginRight: '20px' }}>
             {tours.map(tour => (
               <div key={tour.id} style={{ marginBottom: '20px' }}>
                 <button onClick={() => handleAddTour(tour.date)}>Add Tour</button>
-                <button onClick={() => handleDeleteTour(tour.id)}>Delete Tour</button>
               </div>
             ))}
           </div>
+          {/* =============== sidebar ===================== */}
+
+          {/* ================== main ===================== */}
           <div style={{ flexGrow: 1 }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ backgroundColor: "rgb(41, 195, 41)", padding: "10px 30px", color: "white", margin: "5px" }}>
+            <div style={{ backgroundColor: "rgb(41, 195, 41)", padding: "10px 30px", color: "white", margin: "10px 0" }}>
                 <span style={{ marginRight: '10px' }}>{tours[0].date.toLocaleDateString()}</span>
               </div>
-              <div style={{ display: 'flex' }}>
-                <div style={{ width: '70px' }}></div>
-                <div style={{ flexGrow: 1, position: 'relative', height: '50px', display: 'flex', alignItems: 'center' }}>
-                  {renderTimeBlocks()}
+            <div style={{ display: 'flex' }}>
+              <div style={{ width: '70px' }}></div>
+              <div style={{ flexGrow: 1, position: 'relative', height: '50px', display: 'flex', alignItems: 'center' }}>
+                {renderTimeBlocks()}
+              </div>
+            </div>
+            {tours.map(tour => (
+              <div
+                key={tour.id}
+                style={{ display: 'flex', marginBottom: '20px' }}
+              >
+                <div style={{ width: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span>ツアー {tour.id}</span>
+                </div>
+                <div
+                  onDrop={e => handleDrop(e, tour.id)}
+                  onDragOver={handleDragOver}
+                  style={{
+                    flexGrow: 1,
+                    position: 'relative',
+                    height: '60px',
+                    border: '2px dashed #ccc',
+                    borderRadius: '5px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#f8f9fa',
+                  }}
+                >
+                  {tour.operations.length === 0 ? (
+                    <p style={{ color: '#999' }}>Drag and drop operations here</p>
+                  ) : (
+                    tour.operations.map(operation => {
+                      const operationDuration = operation.endTime.getTime() - operation.startTime.getTime();
+                      const operationStartTimePercentage = (operation.startTime.getHours() * 60 + operation.startTime.getMinutes()) / (24 * 60) * 100;
+                      const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
+                      const backgroundColor = operation.car_model === 'xx' ? 'rgb(0, 123, 255, 0.8)' : 'rgba(218, 136, 13, 0.8)';
+                      return (
+                        <div
+                          key={operation.id}
+                          style={{
+                            position: 'absolute',
+                            left: `${operationStartTimePercentage}%`,
+                            width: `${operationWidthPercentage}%`,
+                            background: backgroundColor,
+                            color: '#fff',
+                            borderRadius: '5px',
+                            boxShadow: '0 0 3px rgba(0,0,0,0.3)',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            height: '100%',
+                          }}
+                          draggable
+                          onDragStart={e => handleDragStart(e, operation.id, true)}
+                        >
+                          {`${operation.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${operation.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
-              {tours.map(tour => (
-                <div
-                  key={tour.id}
-                  style={{ display: 'flex', marginBottom: '20px' }}
-                >
-                  <div style={{ width: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span>ツアー {tour.id}</span>
-                  </div>
-                  <div
-                    onDrop={e => handleDrop(e, tour.id)}
-                    onDragOver={handleDragOver}
-                    style={{
-                      flexGrow: 1,
-                      position: 'relative',
-                      height: '60px',
-                      border: '2px dashed #ccc',
-                      borderRadius: '5px',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      backgroundColor: '#f8f9fa',
-                    }}
-                  >
-                    {/* ... */}
-                  </div>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
+          {/* ================== main ===================== */}
+
         </div>
       </div>
     </>
