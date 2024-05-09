@@ -16,7 +16,7 @@ interface Tour {
 const initialOperationData: OperationData[] = [
   { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T10:00:00') },
   { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00') },
-  { id: 3, date: new Date('2024-04-20'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00') },
+  { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00') },
 ];
 
 const DragAndDropList: React.FC = () => {
@@ -24,32 +24,57 @@ const DragAndDropList: React.FC = () => {
   const [tours, setTours] = useState<Tour[]>([]);
   const [tourCount, setTourCount] = useState<number>(1);
 
-  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number) => {
+  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number, isTour: boolean) => {
     event.dataTransfer.setData('operationId', id.toString());
+    event.dataTransfer.setData('isTour', isTour.toString());
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number, tourDate: Date) => {
     event.preventDefault();
     const operationId = Number(event.dataTransfer.getData('operationId'));
-    const operationIndex = operations.findIndex(op => op.id === operationId);
-    if (operationIndex === -1) return;
+    const isTour = event.dataTransfer.getData('isTour') === 'true';
 
-    const operation = operations[operationIndex];
-    if (operation.date.toDateString() !== tourDate.toDateString()) return; // 開始日が違う操作は追加しない
+    if (isTour) {
+      const tourIndex = tours.findIndex(t => t.id === tourId);
+      if (tourIndex === -1) return;
 
-    const tourIndex = tours.findIndex(t => t.id === tourId);
-    if (tourIndex === -1) return;
+      const operationIndex = tours[tourIndex].operations.findIndex(op => op.id === operationId);
+      if (operationIndex === -1) return;
 
-    const updatedOperations = [...operations];
-    const movedOperation = updatedOperations.splice(operationIndex, 1)[0];
+      const updatedTours = [...tours];
+      const movedOperation = updatedTours[tourIndex].operations[operationIndex];
+      const startTimePercentage = (event.nativeEvent.offsetX / event.currentTarget.clientWidth) * 100;
+      const startHour = Math.floor((startTimePercentage / 100) * 24);
+      const startMinute = Math.round((((startTimePercentage / 100) * 24) % 1) * 60);
+      const endTime = new Date(movedOperation.startTime.getTime() + (movedOperation.endTime.getTime() - movedOperation.startTime.getTime()));
+      const updatedOperation = {
+        ...movedOperation,
+        startTime: new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), startHour, startMinute),
+        endTime: new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), endTime.getHours(), endTime.getMinutes()),
+      };
+      updatedTours[tourIndex].operations[operationIndex] = updatedOperation;
+      setTours(updatedTours);
+    } else {
+      const operationIndex = operations.findIndex(op => op.id === operationId);
+      if (operationIndex === -1) return;
 
-    const updatedTours = [...tours];
-    const movedOperations = { ...movedOperation, startTime: new Date(tourDate.toDateString() + ' ' + movedOperation.startTime.toTimeString()), endTime: new Date(tourDate.toDateString() + ' ' + movedOperation.endTime.toTimeString()) };
+      const operation = operations[operationIndex];
+      if (operation.date.toDateString() !== tourDate.toDateString()) return; // 開始日が違う操作は追加しない
 
-    updatedTours[tourIndex].operations.push(movedOperations);
+      const tourIndex = tours.findIndex(t => t.id === tourId);
+      if (tourIndex === -1) return;
 
-    setOperations(updatedOperations);
-    setTours(updatedTours);
+      const updatedOperations = [...operations];
+      const movedOperation = updatedOperations.splice(operationIndex, 1)[0];
+
+      const updatedTours = [...tours];
+      const movedOperations = { ...movedOperation, startTime: new Date(tourDate.toDateString() + ' ' + movedOperation.startTime.toTimeString()), endTime: new Date(tourDate.toDateString() + ' ' + movedOperation.endTime.toTimeString()) };
+
+      updatedTours[tourIndex].operations.push(movedOperations);
+
+      setOperations(updatedOperations);
+      setTours(updatedTours);
+    }
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -116,7 +141,7 @@ const DragAndDropList: React.FC = () => {
               <div
                 key={operation.id}
                 draggable
-                onDragStart={e => handleDragStart(e, operation.id)}
+                onDragStart={e => handleDragStart(e, operation.id, false)}
                 style={{ margin: '5px 0', padding: '5px', border: '1px solid #ccc', borderRadius: '5px' }}
               >
                 Operation: {operation.startTime.toLocaleTimeString()} - {operation.endTime.toLocaleTimeString()}
@@ -133,8 +158,10 @@ const DragAndDropList: React.FC = () => {
               <h3>Tour {tour.id}</h3>
               <button onClick={() => handleDeleteTour(tour.id)}>Delete Tour</button>
             </div>
-            <div style={{ position: 'absolute', top: '30px', bottom: '0', left: '0', right: '0', display: 'flex', alignItems: 'center' }}>
+            <div style={{ position: 'relative', height: '50px', display: 'flex', alignItems: 'center' }}>
               {renderTimeBlocks()}
+            </div>
+            <div style={{ position: 'relative', height: '40px' }}>
               {tour.operations.map(operation => {
                 const operationDuration = operation.endTime.getTime() - operation.startTime.getTime();
                 const operationStartTimePercentage = (operation.startTime.getHours() * 60 + operation.startTime.getMinutes()) / (24 * 60) * 100;
@@ -148,16 +175,20 @@ const DragAndDropList: React.FC = () => {
                       width: `${operationWidthPercentage}%`,
                       background: '#007bff',
                       color: '#fff',
-                      padding: '5px',
+                      padding: '10px',
                       borderRadius: '5px',
                       boxShadow: '0 0 3px rgba(0,0,0,0.3)',
                       overflow: 'hidden',
                       whiteSpace: 'nowrap',
                       textOverflow: 'ellipsis',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      height: '100%',
                     }}
                     draggable
-                    onDragStart={e => handleDragStart(e, operation.id)}
+                    onDragStart={e => handleDragStart(e, operation.id, true)}
                     onClick={() => handleRemoveFromTour(tour.id, operation.id)}
                   >
                     {`${operation.startTime.toLocaleTimeString()} - ${operation.endTime.toLocaleTimeString()}`}
