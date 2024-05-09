@@ -44,7 +44,9 @@ const DragAndDropList: React.FC = () => {
     const movedOperation = updatedOperations.splice(operationIndex, 1)[0];
 
     const updatedTours = [...tours];
-    updatedTours[tourIndex].operations.push(movedOperation);
+    const movedOperations = { ...movedOperation, startTime: new Date(tourDate.toDateString() + ' ' + movedOperation.startTime.toTimeString()), endTime: new Date(tourDate.toDateString() + ' ' + movedOperation.endTime.toTimeString()) };
+
+    updatedTours[tourIndex].operations.push(movedOperations);
 
     setOperations(updatedOperations);
     setTours(updatedTours);
@@ -80,9 +82,13 @@ const DragAndDropList: React.FC = () => {
 
   const renderTimeBlocks = () => {
     const timeBlocks = [];
+    const totalMinutes = 24 * 60;
     for (let i = 0; i < 24; i++) {
+      const minutesPercentage = (i * 60) / totalMinutes * 100;
+      const nextMinutesPercentage = ((i + 1) * 60) / totalMinutes * 100;
+      const blockWidth = `${nextMinutesPercentage - minutesPercentage}%`;
       timeBlocks.push(
-        <div key={i} style={{ flex: '0 0 auto', width: '50px', borderRight: '1px solid #ccc', padding: '5px 0', textAlign: 'center' }}>
+        <div key={i} style={{ flex: '0 0 auto', width: blockWidth, borderRight: '1px solid #ccc', padding: '5px 0', textAlign: 'center' }}>
           {`${i}:00`}
         </div>
       );
