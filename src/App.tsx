@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface OperationData {
   id: number;
@@ -34,6 +34,13 @@ const DragAndDropList: React.FC = () => {
   const [tours, setTours] = useState<Tour[]>(initialTours);
   const [tourCount, setTourCount] = useState<number>(5);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  useEffect(() => {
+    if (!isEditMode) {
+      const updatedTours = tours.filter(tour => tour.operations.length > 0);
+      setTours(updatedTours);
+    }
+  }, [isEditMode, tours]);
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number, isTour: boolean) => {
     event.dataTransfer.setData('operationId', id.toString());
