@@ -377,7 +377,9 @@ const DragAndDropList: React.FC = () => {
           {/* ================== main ===================== */}
         </div>
       </div>
-      <div className="flex ml-16">{renderRestOperations()}</div>
+      <div className="flex justify-center gap-x-3">
+        {renderRestOperations()}
+      </div>
     </>
   );
 };
