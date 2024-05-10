@@ -367,53 +367,53 @@ const DragAndDropList: React.FC = () => {
                   style={{ width: '200%' }}
                 >
                   {tour.tourOperations.length === 0 ? (
-  <p className="text-gray-500">編集後に空白のツアーは削除されます。</p>
-) : (
-  tour.tourOperations.map(operation => {
-    const operationStartTime = new Date(operation.operationBeginDate);
-    const operationEndTime = new Date(operation.operationEndDeate);
-    const tourStartTime = new Date(tour.beginDateTime);
+                    <p className="text-gray-500">編集後に空白のツアーは削除されます。</p>
+                  ) : (
+                    tour.tourOperations.map(operation => {
+                      const operationStartTime = new Date(operation.operationBeginDate);
+                      const operationEndTime = new Date(operation.operationEndDeate);
+                      const tourStartTime = new Date(tour.beginDateTime);
 
-    const operationStartHour = operationStartTime.getHours() + (operationStartTime.getDate() - tourStartTime.getDate()) * 24;
-    const operationStartMinute = operationStartTime.getMinutes();
-    const operationEndHour = operationEndTime.getHours() + (operationEndTime.getDate() - tourStartTime.getDate()) * 24;
-    const operationEndMinute = operationEndTime.getMinutes();
-    const totalHours = 48;
+                      const operationStartHour = operationStartTime.getHours() + (operationStartTime.getDate() - tourStartTime.getDate()) * 24;
+                      const operationStartMinute = operationStartTime.getMinutes();
+                      const operationEndHour = operationEndTime.getHours() + (operationEndTime.getDate() - tourStartTime.getDate()) * 24;
+                      const operationEndMinute = operationEndTime.getMinutes();
+                      const totalHours = 48;
 
-    const operationStartTimePercentage = ((operationStartHour + operationStartMinute / 60) / totalHours) * 100;
-    const operationEndTimePercentage = ((operationEndHour + operationEndMinute / 60) / totalHours) * 100;
-    const operationWidthPercentage = operationEndTimePercentage - operationStartTimePercentage;
+                      const operationStartTimePercentage = ((operationStartHour + operationStartMinute / 60) / totalHours) * 100;
+                      const operationEndTimePercentage = ((operationEndHour + operationEndMinute / 60) / totalHours) * 100;
+                      const operationWidthPercentage = operationEndTimePercentage - operationStartTimePercentage;
 
-    const backgroundColor =
-      operation.operationType === 'REST'
-        ? 'rgba(224, 118, 236, 0.8)'
-        : operation.carrierType === '4t'
-        ? 'rgba(0, 123, 255, 0.8)'
-        : 'rgba(218, 136, 13, 0.8)';
+                      const backgroundColor =
+                        operation.operationType === 'REST'
+                          ? 'rgba(224, 118, 236, 0.8)'
+                          : operation.carrierType === '4t'
+                          ? 'rgba(0, 123, 255, 0.8)'
+                          : 'rgba(218, 136, 13, 0.8)';
 
-    return (
-      <div
-        key={operation.tourOperationId}
-        className="absolute text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center h-full"
-        style={{
-          left: `${operationStartTimePercentage}%`,
-          width: `${operationWidthPercentage}%`,
-          backgroundColor,
-        }}
-        draggable={isEditMode}
-        onDragStart={e => handleDragStart(e, operation.tourOperationId, true, operation.operationType === 'REST')}
-      >
-        {new Date(operation.operationBeginDate).toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
-      </div>
-    );
-  })
-)}
+                      return (
+                        <div
+                          key={operation.tourOperationId}
+                          className="absolute text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center h-full"
+                          style={{
+                            left: `${operationStartTimePercentage}%`,
+                            width: `${operationWidthPercentage}%`,
+                            backgroundColor,
+                          }}
+                          draggable={isEditMode}
+                          onDragStart={e => handleDragStart(e, operation.tourOperationId, true, operation.operationType === 'REST')}
+                        >
+                          {new Date(operation.operationBeginDate).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             ))}
