@@ -182,7 +182,7 @@ const DragAndDropList: React.FC = () => {
       handleRestOperationDrop(tourId, tourOperationId);
     }
 
-    // TODO ここが休憩の横移動。うまくいかない
+    // TODO 移動はできたが座標が少しズレる。
     if (isRest) {
       const sourceTourIndex = tours.findIndex(t =>
         t.tourOperations.some(op => op.tourOperationId === tourOperationId)
@@ -195,14 +195,29 @@ const DragAndDropList: React.FC = () => {
       if (operationIndex === -1) return;
 
       const updatedTours = [...tours];
-      const operation = updatedTours[sourceTourIndex].tourOperations[operationIndex];
-      const operationDuration = 60 * 60 * 1000; // 1時間
+      const movedOperation = updatedTours[sourceTourIndex].tourOperations[operationIndex];
+      const tourDate = new Date(tours[sourceTourIndex].beginDateTime);
 
-      const dropPositionPercentage = event.clientX / window.innerWidth * 100;
-      const startTime = (dropPositionPercentage / 100) * (24 * 60 * 60 * 1000);
-      operation.operationBeginDate = new Date(startTime).toISOString();
-      operation.operationEndDeate = new Date(startTime + operationDuration).toISOString();
+      const startTimePercentage = (event.nativeEvent.offsetX / event.currentTarget.clientWidth) * 100;
+      const startHour = Math.floor((startTimePercentage / 100) * 24);
+      const startMinute = Math.round((((startTimePercentage / 100) * 24) % 1) * 60);
 
+      const startTime = new Date(
+        tourDate.getFullYear(),
+        tourDate.getMonth(),
+        tourDate.getDate(),
+        startHour,
+        startMinute
+      );
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
+
+      const updatedOperation = {
+        ...movedOperation,
+        operationBeginDate: startTime.toISOString(),
+        operationEndDeate: endTime.toISOString(),
+      };
+
+      updatedTours[sourceTourIndex].tourOperations[operationIndex] = updatedOperation;
       setTours(updatedTours);
     }
 
