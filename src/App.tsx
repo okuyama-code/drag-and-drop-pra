@@ -1,99 +1,166 @@
 import React, { useEffect, useState } from 'react';
 
-interface OperationData {
-  id: number;
-  date: Date;
-  startTime: Date;
-  endTime: Date;
-  car_model: string | null;
-  type: 'drive' | 'rest'; // 操作の種類を表す新しいプロパティ
-}
+export type TourDto = {
+  /** ツアーID */
+  tourId: number;
+  /** 開始日時 */
+  beginDateTime: string;
+  /** 終了日時 */
+  endDateTime: string;
+  /** tourOperation */
+  tourOperations: TourOperationDto[];
+};
 
-interface Tour {
-  id: number;
-  date: Date; // 年月日を表すプロパティを追加
-  operations: OperationData[];
-}
+export type TourOperationDto = {
+  /** TourOperaiton ID */
+  tourOperationId: number;
+  /**
+   * 運行区分
+   * - LOCAL (地場)
+   * - REST (休憩)
+   */
+  operationType: 'LOCAL' | 'REST';
+  /**
+   * 運行
+   * operationTypeが以下の場合に設定される
+   * - MAIN_LINE (幹線)
+   * - LOCAL (地場)
+   */
+  transportOperation?: number;
+  /** 開始日時 */
+  operationBeginDate: string;
+  /** 終了日時 */
+  operationEndDeate: string;
+  /** 開始場所 */
+  startLocation?: LocationDto;
+  /** 終了場所 */
+  goalLocation?: LocationDto;
+  /** 車型 */
+  carrierType: '4t' | '10t';
+};
 
-const initialOperationData: OperationData[] = [
-  { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T12:00:00'), car_model: 'xx', type: 'drive' },
-  { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00'), car_model: 'yy', type: 'drive' },
-  { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00'), car_model: 'xx', type: 'drive' },
-  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T18:00:00'), car_model: 'yy', type: 'drive' },
-  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T17:00:00'), endTime: new Date('2024-04-20T20:00:00'), car_model: 'xx', type: 'drive' }
-];
+type LocationDto = {
+  /** 名前 */
+  name: string
+};
 
-const initialTours: Tour[] = [
-  { id: 1, date: new Date('2024-04-19'), operations: [initialOperationData[0], initialOperationData[1]] },
-  { id: 2, date: new Date('2024-04-19'), operations: [initialOperationData[2]] },
-  { id: 3, date: new Date('2024-04-19'), operations: [initialOperationData[3]] },
-  { id: 4, date: new Date('2024-04-19'), operations: [initialOperationData[4]] },
+const initialTours: TourDto[] = [
+  {
+    tourId: 1,
+    beginDateTime: '2024-04-19T00:00:00',
+    endDateTime: '2024-04-19T23:59:59',
+    tourOperations: [
+      {
+        tourOperationId: 1,
+        operationType: 'LOCAL',
+        operationBeginDate: '2024-04-19T08:00:00',
+        operationEndDeate: '2024-04-19T12:00:00',
+        carrierType: '4t',
+      },
+      {
+        tourOperationId: 2,
+        operationType: 'LOCAL',
+        operationBeginDate: '2024-04-19T11:00:00',
+        operationEndDeate: '2024-04-19T13:00:00',
+        carrierType: '10t',
+      },
+    ],
+  },
+  {
+    tourId: 2,
+    beginDateTime: '2024-04-19T00:00:00',
+    endDateTime: '2024-04-19T23:59:59',
+    tourOperations: [
+      {
+        tourOperationId: 3,
+        operationType: 'LOCAL',
+        operationBeginDate: '2024-04-20T14:00:00',
+        operationEndDeate: '2024-04-20T16:00:00',
+        carrierType: '4t',
+      },
+    ],
+  },
+  {
+    tourId: 3,
+    beginDateTime: '2024-04-19T00:00:00',
+    endDateTime: '2024-04-19T23:59:59',
+    tourOperations: [
+      {
+        tourOperationId: 4,
+        operationType: 'LOCAL',
+        operationBeginDate: '2024-04-20T16:00:00',
+        operationEndDeate: '2024-04-20T18:00:00',
+        carrierType: '10t',
+      },
+    ],
+  },
+  {
+    tourId: 4,
+    beginDateTime: '2024-04-19T00:00:00',
+    endDateTime: '2024-04-19T23:59:59',
+    tourOperations: [
+      {
+        tourOperationId: 5,
+        operationType: 'LOCAL',
+        operationBeginDate: '2024-04-20T17:00:00',
+        operationEndDeate: '2024-04-20T20:00:00',
+        carrierType: '4t',
+      },
+    ],
+  },
 ];
 
 const DragAndDropList: React.FC = () => {
-  const [operations, setOperations] = useState<OperationData[]>([]);
-  const [tours, setTours] = useState<Tour[]>(initialTours);
+  const [tours, setTours] = useState<TourDto[]>(initialTours);
   const [tourCount, setTourCount] = useState<number>(5);
   const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     if (!isEditMode) {
-      const updatedTours = tours.filter(tour => tour.operations.length > 0);
+      const updatedTours = tours.filter(tour => tour.tourOperations.length > 0);
       setTours(updatedTours);
     }
   }, [isEditMode, tours]);
 
-  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number, isTour: boolean) => {
-    event.dataTransfer.setData('operationId', id.toString());
+  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, tourOperationId: number, isTour: boolean) => {
+    event.dataTransfer.setData('tourOperationId', tourOperationId.toString());
     event.dataTransfer.setData('isTour', isTour.toString());
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number) => {
     event.preventDefault();
-    const operationId = Number(event.dataTransfer.getData('operationId'));
+    const tourOperationId = Number(event.dataTransfer.getData('tourOperationId'));
     const isTour = event.dataTransfer.getData('isTour') === 'true';
 
     if (isTour) {
-      const sourceTourIndex = tours.findIndex(t => t.operations.some(op => op.id === operationId));
+      const sourceTourIndex = tours.findIndex(t => t.tourOperations.some(op => op.tourOperationId === tourOperationId));
       if (sourceTourIndex === -1) return;
 
-      const destinationTourIndex = tours.findIndex(t => t.id === tourId);
+      const destinationTourIndex = tours.findIndex(t => t.tourId === tourId);
       if (destinationTourIndex === -1) return;
 
       const updatedTours = [...tours];
-      const operationIndex = updatedTours[sourceTourIndex].operations.findIndex(op => op.id === operationId);
-      const movedOperation = updatedTours[sourceTourIndex].operations.splice(operationIndex, 1)[0];
-      updatedTours[destinationTourIndex].operations.push(movedOperation);
-      setTours(updatedTours);
-    } else {
-      const operationIndex = operations.findIndex(op => op.id === operationId);
-      if (operationIndex === -1) return;
-
-      const tourIndex = tours.findIndex(t => t.id === tourId);
-      if (tourIndex === -1) return;
-
-      const updatedOperations = [...operations];
-      const movedOperation = updatedOperations.splice(operationIndex, 1)[0];
-
-      const updatedTours = [...tours];
-      updatedTours[tourIndex].operations.push(movedOperation);
-
-      setOperations(updatedOperations);
+      const operationIndex = updatedTours[sourceTourIndex].tourOperations.findIndex(op => op.tourOperationId === tourOperationId);
+      const movedOperation = updatedTours[sourceTourIndex].tourOperations.splice(operationIndex, 1)[0];
+      updatedTours[destinationTourIndex].tourOperations.push(movedOperation);
       setTours(updatedTours);
     }
   };
-
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
   };
 
-  const handleAddTour = (date: Date) => {
-    const newTour: Tour = { id: tourCount, date, operations: [] }; // ツアーに年月日を追加
+  const handleAddTour = (beginDateTime: string, endDateTime: string) => {
+    const newTour: TourDto = {
+      tourId: tourCount,
+      beginDateTime,
+      endDateTime,
+      tourOperations: [],
+    };
     setTours([...tours, newTour]);
     setTourCount(prevCount => prevCount + 1);
   };
-
 
   const renderTimeBlocks = () => {
     const timeBlocks = [];
@@ -111,17 +178,8 @@ const DragAndDropList: React.FC = () => {
     return timeBlocks;
   };
 
-  // 年月日ごとに操作をグループ化する
-  const groupedOperations: { [date: string]: OperationData[] } = {};
-  operations.forEach(operation => {
-    const key = operation.date.toDateString();
-    if (!groupedOperations[key]) {
-      groupedOperations[key] = [];
-    }
-    groupedOperations[key].push(operation);
-  });
-
-  function formatDate(date: Date) {
+  function formatDate(dateString: string) {
+    const date = new Date(dateString);
     const year = date.getFullYear();
     const month = ('0' + (date.getMonth() + 1)).slice(-2);
     const day = ('0' + date.getDate()).slice(-2);
@@ -134,14 +192,14 @@ const DragAndDropList: React.FC = () => {
         <div className="flex flex-grow">
           {/* =============== sidebar ===================== */}
           <div className="w-40 mr-5">
-           sidebar
+            sidebar
           </div>
           {/* =============== sidebar ===================== */}
 
           {/* ================== main ===================== */}
           <div className="flex-grow">
             <div className="bg-green-500 text-white py-4 px-6 my-2">
-              <span className="mr-2">{formatDate(tours[0].date)}</span>
+              <span className="mr-2">{formatDate(tours[0].beginDateTime)}</span>
             </div>
             <div className="flex justify-end mr-10 mb-4 text-white">
               <div>
@@ -154,7 +212,7 @@ const DragAndDropList: React.FC = () => {
                 {isEditMode ? (
                   <button
                     className="ml-3 px-3 py-2 bg-blue-400 rounded-md"
-                    onClick={() => handleAddTour(tours[0].date)}
+                    onClick={() => handleAddTour(tours[0].beginDateTime, tours[0].endDateTime)}
                   >
                     ツアーを追加
                   </button>
@@ -170,34 +228,37 @@ const DragAndDropList: React.FC = () => {
               </div>
             </div>
             {tours.map(tour => (
-              <div
-                key={tour.id}
-                className="flex mb-5"
-              >
+              <div key={tour.tourId} className="flex mb-5">
                 <div className="w-16 flex items-center justify-center">
-                  <span>ツアー {tour.id}</span>
+                  <span>ツアー {tour.tourId}</span>
                 </div>
                 <div
-                  onDrop={e => handleDrop(e, tour.id)}
+                  onDrop={e => handleDrop(e, tour.tourId)}
                   onDragOver={handleDragOver}
                   className="flex-grow relative h-16 border-2 border-dashed border-gray-300 rounded-md flex justify-center items-center bg-gray-100"
                 >
-                  {tour.operations.length === 0 ? (
+                  {tour.tourOperations.length === 0 ? (
                     <p className="text-gray-500">編集後に空白のツアーは削除されます。</p>
                   ) : (
-                    tour.operations.map(operation => {
-                      const operationDuration = operation.endTime.getTime() - operation.startTime.getTime();
-                      const operationStartTimePercentage = (operation.startTime.getHours() * 60 + operation.startTime.getMinutes()) / (24 * 60) * 100;
+                    tour.tourOperations.map(operation => {
+                      const operationDuration =
+                        new Date(operation.operationEndDeate).getTime() - new Date(operation.operationBeginDate).getTime();
+                      const operationStartTimePercentage =
+                        (new Date(operation.operationBeginDate).getHours() * 60 +
+                          new Date(operation.operationBeginDate).getMinutes()) /
+                        (24 * 60) *
+                        100;
                       const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
-                      const backgroundColor = operation.type === 'rest'
-                      ? 'rgba(224, 118, 236, 0.8)'
-                      : operation.car_model === 'xx'
-                        ? 'rgba(0, 123, 255, 0.8)'
-                        : 'rgba(218, 136, 13, 0.8)';
+                      const backgroundColor =
+                        operation.operationType === 'REST'
+                          ? 'rgba(224, 118, 236, 0.8)'
+                          : operation.carrierType === '4t'
+                          ? 'rgba(0, 123, 255, 0.8)'
+                          : 'rgba(218, 136, 13, 0.8)';
 
                       return (
                         <div
-                          key={operation.id}
+                          key={operation.tourOperationId}
                           className="absolute text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center h-full"
                           style={{
                             left: `${operationStartTimePercentage}%`,
@@ -205,14 +266,28 @@ const DragAndDropList: React.FC = () => {
                             backgroundColor,
                           }}
                           draggable={isEditMode}
-                          onDragStart={e => handleDragStart(e, operation.id, true)}
+                          onDragStart={e => handleDragStart(e, operation.tourOperationId, true)}
                         >
-                          {operation.type === 'rest' ? (
-                            <div className='text-center overflow-y-auto'>
+                          {operation.operationType === 'REST' ? (
+                            <div className="text-center overflow-y-auto">
                               <p>休憩</p>
-                              <p> {operation.startTime.toLocaleTimeString([], { hour: '2-digit' })}から</p>
+                              <p>
+                                {' '}
+                                {new Date(operation.operationBeginDate).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                })}
+                                から
+                              </p>
                             </div>
-                          ) : `${operation.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${operation.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                          ) : (
+                            `${new Date(operation.operationBeginDate).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })} - ${new Date(operation.operationEndDeate).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}`
+                          )}
                         </div>
                       );
                     })
@@ -222,12 +297,10 @@ const DragAndDropList: React.FC = () => {
             ))}
           </div>
           {/* ================== main ===================== */}
-
         </div>
       </div>
     </>
   );
-
 };
 
 export default DragAndDropList;
