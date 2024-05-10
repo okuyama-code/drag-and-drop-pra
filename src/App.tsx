@@ -123,6 +123,7 @@ const DragAndDropList: React.FC = () => {
   const [tours, setTours] = useState<TourDto[]>(initialTours);
   const [tourCount, setTourCount] = useState<number>(5);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [restOperations, setRestOperations] = useState<TourOperationDto[]>(initialRestTourOperation);
 
   useEffect(() => {
     if (!isEditMode) {
@@ -171,21 +172,6 @@ const DragAndDropList: React.FC = () => {
     setTourCount(prevCount => prevCount + 1);
   };
 
-  const renderTimeBlocks = () => {
-    const timeBlocks = [];
-    const totalMinutes = 24 * 60;
-    for (let i = 0; i < 24; i++) {
-      const minutesPercentage = (i * 60) / totalMinutes * 100;
-      const nextMinutesPercentage = ((i + 1) * 60) / totalMinutes * 100;
-      const blockWidth = `${nextMinutesPercentage - minutesPercentage}%`;
-      timeBlocks.push(
-        <div key={i} style={{ flex: '0 0 auto', width: blockWidth, borderRight: '1px solid #ccc', padding: '5px 0', textAlign: 'center' }}>
-          {`${i}:00`}
-        </div>
-      );
-    }
-    return timeBlocks;
-  };
 
   function formatDate(dateString: string) {
     const date = new Date(dateString);
@@ -194,6 +180,69 @@ const DragAndDropList: React.FC = () => {
     const day = ('0' + date.getDate()).slice(-2);
     return `${year}年${month}月${day}日`;
   }
+
+  const renderTimeBlocks = () => {
+    const timeBlocks = [];
+    const totalMinutes = 24 * 60;
+    for (let i = 0; i < 24; i++) {
+      const minutesPercentage = (i * 60) / totalMinutes * 100;
+      const nextMinutesPercentage = ((i + 1) * 60) / totalMinutes * 100;
+      const blockWidth = `${nextMinutesPercentage - minutesPercentage}%`;
+      timeBlocks.push(
+        <div
+          key={i}
+          style={{
+            flex: '0 0 auto',
+            width: blockWidth,
+            borderRight: '1px solid #ccc',
+            padding: '5px 0',
+            textAlign: 'center',
+          }}
+        >
+          {`${i}:00`}
+        </div>
+      );
+    }
+    return timeBlocks;
+  };
+
+  const renderRestOperations = () => {
+    return restOperations.map(operation => {
+      const operationDuration =
+        new Date(operation.operationEndDeate).getTime() -
+        new Date(operation.operationBeginDate).getTime();
+      const operationStartTimePercentage =
+        (new Date(operation.operationBeginDate).getHours() * 60 +
+          new Date(operation.operationBeginDate).getMinutes()) /
+        (24 * 60) *
+        100;
+      const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
+
+      return (
+        <div
+          key={operation.tourOperationId}
+          className="text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center mb-2"
+          style={{
+            backgroundColor: 'rgba(224, 118, 236, 0.8)', // 休憩の背景色
+            width: `${operationWidthPercentage}%`,
+          }}
+          draggable={isEditMode}
+          onDragStart={e => handleDragStart(e, operation.tourOperationId, true)}
+        >
+          <div className="text-center overflow-y-auto">
+            <p>休憩</p>
+            <p>
+              {new Date(operation.operationBeginDate).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+              から
+            </p>
+          </div>
+        </div>
+      );
+    });
+  };
 
   return (
     <>
@@ -308,6 +357,7 @@ const DragAndDropList: React.FC = () => {
           {/* ================== main ===================== */}
         </div>
       </div>
+      <div className="flex ml-16">{renderRestOperations()}</div>
     </>
   );
 };
