@@ -132,9 +132,15 @@ const DragAndDropList: React.FC = () => {
     }
   }, [isEditMode, tours]);
 
-  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, tourOperationId: number, isTour: boolean) => {
+  const handleDragStart = (
+    event: React.DragEvent<HTMLDivElement>,
+    tourOperationId: number,
+    isTour: boolean,
+    isRest: boolean
+  ) => {
     event.dataTransfer.setData('tourOperationId', tourOperationId.toString());
     event.dataTransfer.setData('isTour', isTour.toString());
+    event.dataTransfer.setData('isRest', isRest.toString());
   };
 
   const handleRestOperationDrop = (tourId: number, restOperationId: number) => {
@@ -158,6 +164,7 @@ const DragAndDropList: React.FC = () => {
     event.preventDefault();
     const tourOperationId = Number(event.dataTransfer.getData('tourOperationId'));
     const isTour = event.dataTransfer.getData('isTour') === 'true';
+    const isRest = event.dataTransfer.getData('isRest') === 'true';
 
     if (isTour) {
       const sourceTourIndex = tours.findIndex(t => t.tourOperations.some(op => op.tourOperationId === tourOperationId));
@@ -174,7 +181,34 @@ const DragAndDropList: React.FC = () => {
     } else {
       handleRestOperationDrop(tourId, tourOperationId);
     }
+
+    // TODO ここが休憩の横移動。うまくいかない
+    if (isRest) {
+      const sourceTourIndex = tours.findIndex(t =>
+        t.tourOperations.some(op => op.tourOperationId === tourOperationId)
+      );
+      if (sourceTourIndex === -1) return;
+
+      const operationIndex = tours[sourceTourIndex].tourOperations.findIndex(
+        op => op.tourOperationId === tourOperationId
+      );
+      if (operationIndex === -1) return;
+
+      const updatedTours = [...tours];
+      const operation = updatedTours[sourceTourIndex].tourOperations[operationIndex];
+      const operationDuration = 60 * 60 * 1000; // 1時間
+
+      const dropPositionPercentage = event.clientX / window.innerWidth * 100;
+      const startTime = (dropPositionPercentage / 100) * (24 * 60 * 60 * 1000);
+      operation.operationBeginDate = new Date(startTime).toISOString();
+      operation.operationEndDeate = new Date(startTime + operationDuration).toISOString();
+
+      setTours(updatedTours);
+    }
+
   };
+
+
 
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -247,7 +281,7 @@ const DragAndDropList: React.FC = () => {
             width: `${operationWidthPercentage}%`,
           }}
           draggable={isEditMode}
-          onDragStart={e => handleDragStart(e, operation.tourOperationId, false)}
+          onDragStart={e => handleDragStart(e, operation.tourOperationId, false, operation.operationType === 'REST')}
         >
           <div className="text-center overflow-y-auto">
             <p>休憩</p>
@@ -344,7 +378,7 @@ const DragAndDropList: React.FC = () => {
                             backgroundColor,
                           }}
                           draggable={isEditMode}
-                          onDragStart={e => handleDragStart(e, operation.tourOperationId, true)}
+                          onDragStart={e => handleDragStart(e, operation.tourOperationId, true, operation.operationType === 'REST')}
                         >
                           {operation.operationType === 'REST' ? (
                             <div className="text-center overflow-y-auto">
