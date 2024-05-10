@@ -5,7 +5,7 @@ interface OperationData {
   date: Date;
   startTime: Date;
   endTime: Date;
-  car_model: string;
+  car_model: string | null;
   type: 'drive' | 'rest'; // 操作の種類を表す新しいプロパティ
 }
 
@@ -22,7 +22,7 @@ const initialOperationData: OperationData[] = [
   { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T18:00:00'), car_model: 'yy', type: 'drive' },
   { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T17:00:00'), endTime: new Date('2024-04-20T20:00:00'), car_model: 'xx', type: 'drive' },
   // =========================== 休憩のデータ =====================
-  { id: 6, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T13:00:00'), endTime: new Date('2024-04-20T14:00:00'), car_model: 'xx', type: 'rest' },
+  { id: 6, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T13:00:00'), endTime: new Date('2024-04-20T14:00:00'), car_model: null, type: 'rest' },
 ];
 
 const initialTours: Tour[] = [
@@ -185,13 +185,18 @@ const DragAndDropList: React.FC = () => {
                   className="flex-grow relative h-16 border-2 border-dashed border-gray-300 rounded-md flex justify-center items-center bg-gray-100"
                 >
                   {tour.operations.length === 0 ? (
-                    <p className="text-gray-500">Drag and drop operations here</p>
+                    <p className="text-gray-500">編集後に空白のツアーは削除されます。</p>
                   ) : (
                     tour.operations.map(operation => {
                       const operationDuration = operation.endTime.getTime() - operation.startTime.getTime();
                       const operationStartTimePercentage = (operation.startTime.getHours() * 60 + operation.startTime.getMinutes()) / (24 * 60) * 100;
                       const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
-                      const backgroundColor = operation.car_model === 'xx' ? 'rgba(0, 123, 255, 0.8)' : 'rgba(218, 136, 13, 0.8)';
+                      const backgroundColor = operation.type === 'rest'
+                      ? 'rgba(224, 118, 236, 0.8)'
+                      : operation.car_model === 'xx'
+                        ? 'rgba(0, 123, 255, 0.8)'
+                        : 'rgba(218, 136, 13, 0.8)';
+
                       return (
                         <div
                           key={operation.id}
@@ -204,7 +209,12 @@ const DragAndDropList: React.FC = () => {
                           draggable={isEditMode}
                           onDragStart={e => handleDragStart(e, operation.id, true)}
                         >
-                          {`${operation.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${operation.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                          {operation.type === 'rest' ? (
+                            <div className='text-center overflow-y-auto'>
+                              <p>休憩</p>
+                              <p> {operation.startTime.toLocaleTimeString([], { hour: '2-digit' })}から</p>
+                            </div>
+                          ) : `${operation.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${operation.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                         </div>
                       );
                     })
