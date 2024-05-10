@@ -137,6 +137,19 @@ const DragAndDropList: React.FC = () => {
     event.dataTransfer.setData('isTour', isTour.toString());
   };
 
+  const handleRestOperationDrop = (tourId: number, restOperationId: number) => {
+    const restOperationIndex = restOperations.findIndex(op => op.tourOperationId === restOperationId);
+    if (restOperationIndex === -1) return;
+
+    const destinationTourIndex = tours.findIndex(t => t.tourId === tourId);
+    if (destinationTourIndex === -1) return;
+
+    const updatedTours = [...tours];
+    const movedRestOperation = { ...restOperations[restOperationIndex] };
+    updatedTours[destinationTourIndex].tourOperations.push(movedRestOperation);
+    setTours(updatedTours);
+  };
+
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number) => {
     event.preventDefault();
     const tourOperationId = Number(event.dataTransfer.getData('tourOperationId'));
@@ -154,8 +167,11 @@ const DragAndDropList: React.FC = () => {
       const movedOperation = updatedTours[sourceTourIndex].tourOperations.splice(operationIndex, 1)[0];
       updatedTours[destinationTourIndex].tourOperations.push(movedOperation);
       setTours(updatedTours);
+    } else {
+      handleRestOperationDrop(tourId, tourOperationId);
     }
   };
+
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -227,7 +243,7 @@ const DragAndDropList: React.FC = () => {
             width: `${operationWidthPercentage}%`,
           }}
           draggable={isEditMode}
-          onDragStart={e => handleDragStart(e, operation.tourOperationId, true)}
+          onDragStart={e => handleDragStart(e, operation.tourOperationId, false)}
         >
           <div className="text-center overflow-y-auto">
             <p>休憩</p>
