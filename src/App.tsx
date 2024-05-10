@@ -45,11 +45,11 @@ type LocationDto = {
 };
 
 const initialRestTourOperation: TourOperationDto[] = [
-  { tourOperationId: 1, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
+  { tourOperationId: 100, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
   operationEndDeate: '2024-04-19T12:00:00' },
-  { tourOperationId: 2, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
+  { tourOperationId: 101, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
   operationEndDeate: '2024-04-19T12:00:00' },
-  { tourOperationId: 3, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
+  { tourOperationId: 102, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
   operationEndDeate: '2024-04-19T12:00:00' },
 ]
 
@@ -148,6 +148,10 @@ const DragAndDropList: React.FC = () => {
     const movedRestOperation = { ...restOperations[restOperationIndex] };
     updatedTours[destinationTourIndex].tourOperations.push(movedRestOperation);
     setTours(updatedTours);
+
+     // 元の休憩データを削除する
+    const updatedRestOperations = restOperations.filter(op => op.tourOperationId !== restOperationId);
+    setRestOperations(updatedRestOperations);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number) => {
