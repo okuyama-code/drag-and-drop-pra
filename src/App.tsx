@@ -205,7 +205,7 @@ const DragAndDropList: React.FC = () => {
       const dayDurationMs = 48 * 60 * 60 * 1000;
       const startTimeMs = Math.round((dropX / containerWidth) * dayDurationMs / (30 * 60 * 1000)) * (30 * 60 * 1000);
 
-      let startTime = new Date(tourDate.getTime() + startTimeMs);
+      const startTime = new Date(tourDate.getTime() + startTimeMs);
       let endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
 
       // 日付を跨いだ場合の処理
@@ -280,42 +280,32 @@ const DragAndDropList: React.FC = () => {
   };
 
   const renderRestOperations = () => {
-    return restOperations.map(operation => {
-      const operationDuration =
-        new Date(operation.operationEndDeate).getTime() -
-        new Date(operation.operationBeginDate).getTime();
-      const operationStartTimePercentage =
-        (new Date(operation.operationBeginDate).getHours() * 60 +
-          new Date(operation.operationBeginDate).getMinutes()) /
-        (24 * 60) *
-        100;
-      const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
-
-      return (
-        <div
-          key={operation.tourOperationId}
-          className="text-white rounded shadow-md overflow-visible whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center mb-2"
-          style={{
-            backgroundColor: 'rgba(224, 118, 236, 0.8)', // 休憩の背景色
-            width: 100,
-            padding: '8px 16px',
-          }}
-          draggable={isEditMode}
-          onDragStart={e => handleDragStart(e, operation.tourOperationId, false, operation.operationType === 'REST')}
-        >
-          <div className="text-center">
-            <p>休憩</p>
-            {new Date(operation.operationBeginDate).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-          </div>
+    return restOperations.map(operation => (
+      <div
+        key={operation.tourOperationId}
+        className="text-white rounded shadow-md overflow-visible whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center mb-2"
+        style={{
+          backgroundColor: 'rgba(224, 118, 236, 0.8)', // 休憩の背景色
+          width: 100,
+          padding: '8px 16px',
+        }}
+        draggable={isEditMode}
+        onDragStart={e => handleDragStart(e, operation.tourOperationId, false, operation.operationType === 'REST')}
+      >
+        <div className="text-center">
+          <p>休憩</p>
+          {new Date(operation.operationBeginDate).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+          {' - '}
+          {new Date(operation.operationEndDeate).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
         </div>
-      );
-    });
+      </div>
+    ));
   };
 
   return (
