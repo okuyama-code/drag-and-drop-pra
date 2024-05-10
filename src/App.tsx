@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Sidebar from './components/Sidebar';
 
 export type TourDto = {
   /** ツアーID */
@@ -311,12 +312,7 @@ const DragAndDropList: React.FC = () => {
   return (
     <>
       <div className="flex">
-        {/* =============== sidebar ===================== */}
-        <div className="w-[500px] mr-5">
-          sidebar
-        </div>
-        {/* =============== sidebar ===================== */}
-
+        <Sidebar />
         {/* ================== main ===================== */}
         <div>
           <div>
