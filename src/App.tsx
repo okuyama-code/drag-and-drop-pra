@@ -84,8 +84,8 @@ const initialTours: TourDto[] = [
       {
         tourOperationId: 3,
         operationType: 'LOCAL',
-        operationBeginDate: '2024-04-20T14:00:00',
-        operationEndDeate: '2024-04-20T16:00:00',
+        operationBeginDate: '2024-04-19T14:00:00',
+        operationEndDeate: '2024-04-19T16:00:00',
         carrierType: '4t',
       },
     ],
@@ -98,8 +98,8 @@ const initialTours: TourDto[] = [
       {
         tourOperationId: 4,
         operationType: 'LOCAL',
-        operationBeginDate: '2024-04-20T16:00:00',
-        operationEndDeate: '2024-04-20T18:00:00',
+        operationBeginDate: '2024-04-19T16:00:00',
+        operationEndDeate: '2024-04-19T18:00:00',
         carrierType: '10t',
       },
     ],
@@ -112,8 +112,8 @@ const initialTours: TourDto[] = [
       {
         tourOperationId: 5,
         operationType: 'LOCAL',
-        operationBeginDate: '2024-04-20T17:00:00',
-        operationEndDeate: '2024-04-20T20:00:00',
+        operationBeginDate: '2024-04-19T17:00:00',
+        operationEndDeate: '2024-04-19T20:00:00',
         carrierType: '4t',
       },
     ],
@@ -183,7 +183,6 @@ const DragAndDropList: React.FC = () => {
       handleRestOperationDrop(tourId, tourOperationId);
     }
 
-    // TODO 移動はできたが座標が少しズレる。
     if (isRest) {
       const sourceTourIndex = tours.findIndex(t =>
         t.tourOperations.some(op => op.tourOperationId === tourOperationId)
@@ -203,11 +202,17 @@ const DragAndDropList: React.FC = () => {
       const containerLeft = containerRect.left + window.pageXOffset;
       const dropX = event.pageX - containerLeft;
       const containerWidth = containerRect.width;
-      const dayDurationMs = 24 * 60 * 60 * 1000;
+      const dayDurationMs = 48 * 60 * 60 * 1000;
       const startTimeMs = Math.round((dropX / containerWidth) * dayDurationMs / (30 * 60 * 1000)) * (30 * 60 * 1000);
 
-      const startTime = new Date(tourDate.getTime() + startTimeMs);
-      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
+      let startTime = new Date(tourDate.getTime() + startTimeMs);
+      let endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
+
+      // 日付を跨いだ場合の処理
+      if (endTime.getDate() !== startTime.getDate()) {
+        const nextDay = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+        endTime = new Date(nextDay.getTime());
+      }
 
       const updatedOperation = {
         ...movedOperation,
@@ -247,27 +252,31 @@ const DragAndDropList: React.FC = () => {
 
   const renderTimeBlocks = () => {
     const timeBlocks = [];
-    const totalMinutes = 24 * 60;
-    for (let i = 0; i < 24; i++) {
-      const minutesPercentage = (i * 60) / totalMinutes * 100;
-      const nextMinutesPercentage = ((i + 1) * 60) / totalMinutes * 100;
-      const blockWidth = `${nextMinutesPercentage - minutesPercentage}%`;
+    const totalHours = 48;
+    const blockWidth = 50;
+    for (let i = 0; i < totalHours; i++) {
+      const hour = i % 24;
+      const day = Math.floor(i / 24);
       timeBlocks.push(
         <div
           key={i}
           style={{
-            flex: '0 0 auto',
-            width: blockWidth,
+            width: blockWidth, // 幅を100pxに設定
             borderRight: '1px solid #ccc',
-            padding: '5px 0',
+            padding: '10px 0',
             textAlign: 'center',
+            fontSize: '14px',
           }}
         >
-          {`${i}:00`}
+          {`${day > 0 ? `翌日` : ''}${hour}:00`}
         </div>
       );
     }
-    return timeBlocks;
+    return (
+      <div className="flex-grow relative h-12 flex overflow-x-auto" style={{ width: `${blockWidth * totalHours}px` }}>
+        <div className="flex">{timeBlocks}</div>
+      </div>
+    );
   };
 
   const renderRestOperations = () => {
@@ -319,7 +328,7 @@ const DragAndDropList: React.FC = () => {
             <div className="bg-green-500 text-white py-4 px-6 my-2">
               <span className="mr-2">{formatDate(tours[0].beginDateTime)}</span>
             </div>
-            <div className="flex justify-end mr-10 mb-4 text-white">
+            <div className="flex mr-10 mb-4 text-white">
               <div>
                 <button
                   className={`px-3 py-2 rounded-md ${isEditMode ? 'bg-red-500' : 'bg-blue-400'}`}
@@ -348,57 +357,63 @@ const DragAndDropList: React.FC = () => {
             {tours.map(tour => (
               <div key={tour.tourId} className="flex mb-5">
                 <div className="w-16 flex items-center justify-center">
-                  <span>ツアー {tour.tourId}</span>
+                  {/* 時間と合わせるためのmrで荒く治療した */}
+                  <span className='mr-[45px]'>ツアー {tour.tourId}</span>
                 </div>
                 <div
                   onDrop={e => handleDrop(e, tour.tourId)}
                   onDragOver={handleDragOver}
-                  className="flex-grow relative h-16 border-2 border-dashed border-gray-300 rounded-md flex justify-center items-center bg-gray-100"
+                  className="relative h-16 border-2 border-dashed border-gray-300 rounded-md flex justify-center items-center bg-gray-100"
+                  style={{ width: '200%' }}
                 >
                   {tour.tourOperations.length === 0 ? (
-                    <p className="text-gray-500">編集後に空白のツアーは削除されます。</p>
-                  ) : (
-                    tour.tourOperations.map(operation => {
-                      const operationDuration =
-                        new Date(operation.operationEndDeate).getTime() - new Date(operation.operationBeginDate).getTime();
-                      const operationStartTimePercentage =
-                        (new Date(operation.operationBeginDate).getHours() * 60 +
-                          new Date(operation.operationBeginDate).getMinutes()) /
-                        (24 * 60) *
-                        100;
-                      const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
-                      const backgroundColor =
-                        operation.operationType === 'REST'
-                          ? 'rgba(224, 118, 236, 0.8)'
-                          : operation.carrierType === '4t'
-                          ? 'rgba(0, 123, 255, 0.8)'
-                          : 'rgba(218, 136, 13, 0.8)';
+  <p className="text-gray-500">編集後に空白のツアーは削除されます。</p>
+) : (
+  tour.tourOperations.map(operation => {
+    const operationStartTime = new Date(operation.operationBeginDate);
+    const operationEndTime = new Date(operation.operationEndDeate);
+    const tourStartTime = new Date(tour.beginDateTime);
 
-                      return (
-                        <div
-                          key={operation.tourOperationId}
-                          className="absolute text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center h-full"
-                          style={{
-                            left: `${operationStartTimePercentage}%`,
-                            width: `${operationWidthPercentage}%`,
-                            backgroundColor,
-                          }}
-                          draggable={isEditMode}
-                          onDragStart={e => handleDragStart(e, operation.tourOperationId, true, operation.operationType === 'REST')}
-                        >
+    const operationStartHour = operationStartTime.getHours() + (operationStartTime.getDate() - tourStartTime.getDate()) * 24;
+    const operationStartMinute = operationStartTime.getMinutes();
+    const operationEndHour = operationEndTime.getHours() + (operationEndTime.getDate() - tourStartTime.getDate()) * 24;
+    const operationEndMinute = operationEndTime.getMinutes();
+    const totalHours = 48;
 
-                            {new Date(operation.operationBeginDate).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
+    const operationStartTimePercentage = ((operationStartHour + operationStartMinute / 60) / totalHours) * 100;
+    const operationEndTimePercentage = ((operationEndHour + operationEndMinute / 60) / totalHours) * 100;
+    const operationWidthPercentage = operationEndTimePercentage - operationStartTimePercentage;
 
-                        </div>
-                      );
-                    })
-                  )}
+    const backgroundColor =
+      operation.operationType === 'REST'
+        ? 'rgba(224, 118, 236, 0.8)'
+        : operation.carrierType === '4t'
+        ? 'rgba(0, 123, 255, 0.8)'
+        : 'rgba(218, 136, 13, 0.8)';
+
+    return (
+      <div
+        key={operation.tourOperationId}
+        className="absolute text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center h-full"
+        style={{
+          left: `${operationStartTimePercentage}%`,
+          width: `${operationWidthPercentage}%`,
+          backgroundColor,
+        }}
+        draggable={isEditMode}
+        onDragStart={e => handleDragStart(e, operation.tourOperationId, true, operation.operationType === 'REST')}
+      >
+        {new Date(operation.operationBeginDate).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </div>
+    );
+  })
+)}
                 </div>
               </div>
             ))}
