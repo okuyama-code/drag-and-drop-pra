@@ -20,16 +20,14 @@ const initialOperationData: OperationData[] = [
   { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00'), car_model: 'yy', type: 'drive' },
   { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00'), car_model: 'xx', type: 'drive' },
   { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T18:00:00'), car_model: 'yy', type: 'drive' },
-  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T17:00:00'), endTime: new Date('2024-04-20T20:00:00'), car_model: 'xx', type: 'drive' },
-  // =========================== 休憩のデータ =====================
-  { id: 6, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T13:00:00'), endTime: new Date('2024-04-20T14:00:00'), car_model: null, type: 'rest' },
+  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T17:00:00'), endTime: new Date('2024-04-20T20:00:00'), car_model: 'xx', type: 'drive' }
 ];
 
 const initialTours: Tour[] = [
   { id: 1, date: new Date('2024-04-19'), operations: [initialOperationData[0], initialOperationData[1]] },
   { id: 2, date: new Date('2024-04-19'), operations: [initialOperationData[2]] },
   { id: 3, date: new Date('2024-04-19'), operations: [initialOperationData[3]] },
-  { id: 4, date: new Date('2024-04-19'), operations: [initialOperationData[4], initialOperationData[5]] },
+  { id: 4, date: new Date('2024-04-19'), operations: [initialOperationData[4]] },
 ];
 
 const DragAndDropList: React.FC = () => {
