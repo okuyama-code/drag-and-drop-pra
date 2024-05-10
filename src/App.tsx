@@ -199,8 +199,9 @@ const DragAndDropList: React.FC = () => {
       const tourDate = new Date(tours[sourceTourIndex].beginDateTime);
 
       const startTimePercentage = (event.nativeEvent.offsetX / event.currentTarget.clientWidth) * 100;
-      const startHour = Math.floor((startTimePercentage / 100) * 24);
-      const startMinute = Math.round((((startTimePercentage / 100) * 24) % 1) * 60);
+      const roundedStartTimePercentage = Math.round(startTimePercentage / (100 / 24 / 2)) * (100 / 24 / 2); // 30分単位で丸める
+      const startHour = Math.floor(roundedStartTimePercentage / (100 / 24));
+      const startMinute = Math.round(((roundedStartTimePercentage / (100 / 24)) % 1) * 60);
 
       const startTime = new Date(
         tourDate.getFullYear(),
@@ -290,23 +291,24 @@ const DragAndDropList: React.FC = () => {
       return (
         <div
           key={operation.tourOperationId}
-          className="text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center mb-2"
+          className="text-black rounded shadow-md overflow-visible whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center mb-2"
           style={{
             backgroundColor: 'rgba(224, 118, 236, 0.8)', // 休憩の背景色
-            width: `${operationWidthPercentage}%`,
+            width: 100,
+            padding: '8px 16px',
           }}
           draggable={isEditMode}
           onDragStart={e => handleDragStart(e, operation.tourOperationId, false, operation.operationType === 'REST')}
         >
-          <div className="text-center overflow-y-auto">
+          <div className="text-center">
             <p>休憩</p>
-            <p>
-              {new Date(operation.operationBeginDate).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-              から
-            </p>
+            {new Date(operation.operationBeginDate).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
           </div>
         </div>
       );
@@ -395,26 +397,15 @@ const DragAndDropList: React.FC = () => {
                           draggable={isEditMode}
                           onDragStart={e => handleDragStart(e, operation.tourOperationId, true, operation.operationType === 'REST')}
                         >
-                          {operation.operationType === 'REST' ? (
-                            <div className="text-center overflow-y-auto">
-                              <p>休憩</p>
-                              <p>
-                                {' '}
-                                {new Date(operation.operationBeginDate).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                })}
-                                から
-                              </p>
-                            </div>
-                          ) : (
-                            `${new Date(operation.operationBeginDate).toLocaleTimeString([], {
+
+                            {new Date(operation.operationBeginDate).toLocaleTimeString([], {
                               hour: '2-digit',
                               minute: '2-digit',
-                            })} - ${new Date(operation.operationEndDeate).toLocaleTimeString([], {
+                            })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
                               hour: '2-digit',
                               minute: '2-digit',
-                            })}`
-                          )}
+                            })}
+
                         </div>
                       );
                     })
