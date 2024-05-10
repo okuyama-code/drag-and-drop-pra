@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 
 interface OperationData {
   id: number;
-  date: Date; // 年月日を表すプロパティを追加
+  date: Date;
   startTime: Date;
   endTime: Date;
   car_model: string;
+  type: 'drive' | 'rest'; // 操作の種類を表す新しいプロパティ
 }
 
 interface Tour {
@@ -15,18 +16,20 @@ interface Tour {
 }
 
 const initialOperationData: OperationData[] = [
-  { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T12:00:00'), car_model: 'xx' },
-  { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00'), car_model: 'yy' },
-  { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00'), car_model: 'xx' },
-  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T18:00:00'), car_model: 'yy' },
-  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T17:00:00'), endTime: new Date('2024-04-20T20:00:00'), car_model: 'xx' },
+  { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T12:00:00'), car_model: 'xx', type: 'drive' },
+  { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00'), car_model: 'yy', type: 'drive' },
+  { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00'), car_model: 'xx', type: 'drive' },
+  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T18:00:00'), car_model: 'yy', type: 'drive' },
+  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T17:00:00'), endTime: new Date('2024-04-20T20:00:00'), car_model: 'xx', type: 'drive' },
+  // =========================== 休憩のデータ =====================
+  { id: 6, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T13:00:00'), endTime: new Date('2024-04-20T14:00:00'), car_model: 'xx', type: 'rest' },
 ];
 
 const initialTours: Tour[] = [
   { id: 1, date: new Date('2024-04-19'), operations: [initialOperationData[0], initialOperationData[1]] },
   { id: 2, date: new Date('2024-04-19'), operations: [initialOperationData[2]] },
   { id: 3, date: new Date('2024-04-19'), operations: [initialOperationData[3]] },
-  { id: 4, date: new Date('2024-04-19'), operations: [initialOperationData[4]] },
+  { id: 4, date: new Date('2024-04-19'), operations: [initialOperationData[4], initialOperationData[5]] },
 ];
 
 const DragAndDropList: React.FC = () => {
@@ -93,10 +96,6 @@ const DragAndDropList: React.FC = () => {
     setTourCount(prevCount => prevCount + 1);
   };
 
-  // const handleDeleteTour = (tourId: number) => {
-  //   const updatedTours = tours.filter(tour => tour.id !== tourId);
-  //   setTours(updatedTours);
-  // };
 
   const renderTimeBlocks = () => {
     const timeBlocks = [];
