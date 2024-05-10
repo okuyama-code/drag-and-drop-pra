@@ -198,18 +198,14 @@ const DragAndDropList: React.FC = () => {
       const movedOperation = updatedTours[sourceTourIndex].tourOperations[operationIndex];
       const tourDate = new Date(tours[sourceTourIndex].beginDateTime);
 
-      const startTimePercentage = (event.nativeEvent.offsetX / event.currentTarget.clientWidth) * 100;
-      const roundedStartTimePercentage = Math.round(startTimePercentage / (100 / 24 / 2)) * (100 / 24 / 2); // 30分単位で丸める
-      const startHour = Math.floor(roundedStartTimePercentage / (100 / 24));
-      const startMinute = Math.round(((roundedStartTimePercentage / (100 / 24)) % 1) * 60);
+      const containerRect = event.currentTarget.getBoundingClientRect();
+      const containerLeft = containerRect.left + window.pageXOffset;
+      const dropX = event.pageX - containerLeft;
+      const containerWidth = containerRect.width;
+      const dayDurationMs = 24 * 60 * 60 * 1000;
+      const startTimeMs = Math.round((dropX / containerWidth) * dayDurationMs / (30 * 60 * 1000)) * (30 * 60 * 1000);
 
-      const startTime = new Date(
-        tourDate.getFullYear(),
-        tourDate.getMonth(),
-        tourDate.getDate(),
-        startHour,
-        startMinute
-      );
+      const startTime = new Date(tourDate.getTime() + startTimeMs);
       const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
 
       const updatedOperation = {
@@ -221,14 +217,11 @@ const DragAndDropList: React.FC = () => {
       updatedTours[sourceTourIndex].tourOperations[operationIndex] = updatedOperation;
       setTours(updatedTours);
     }
-
   };
-
-
-
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
   };
 
   const handleAddTour = (beginDateTime: string, endDateTime: string) => {
