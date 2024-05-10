@@ -131,7 +131,7 @@ const DragAndDropList: React.FC = () => {
       const updatedTours = tours.filter(tour => tour.tourOperations.length > 0);
       setTours(updatedTours);
     }
-  }, [isEditMode, tours]);
+  }, [isEditMode, JSON.stringify(tours)]);
 
   const handleDragStart = (
     event: React.DragEvent<HTMLDivElement>,
