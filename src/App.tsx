@@ -36,13 +36,22 @@ export type TourOperationDto = {
   /** 終了場所 */
   goalLocation?: LocationDto;
   /** 車型 */
-  carrierType: '4t' | '10t';
+  carrierType?: '4t' | '10t';
 };
 
 type LocationDto = {
   /** 名前 */
   name: string
 };
+
+const initialRestTourOperation: TourOperationDto[] = [
+  { tourOperationId: 1, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
+  operationEndDeate: '2024-04-19T12:00:00' },
+  { tourOperationId: 2, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
+  operationEndDeate: '2024-04-19T12:00:00' },
+  { tourOperationId: 3, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
+  operationEndDeate: '2024-04-19T12:00:00' },
+]
 
 const initialTours: TourDto[] = [
   {
