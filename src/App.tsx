@@ -284,7 +284,7 @@ const DragAndDropList: React.FC = () => {
       return (
         <div
           key={operation.tourOperationId}
-          className="text-black rounded shadow-md overflow-visible whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center mb-2"
+          className="text-white rounded shadow-md overflow-visible whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center mb-2"
           style={{
             backgroundColor: 'rgba(224, 118, 236, 0.8)', // 休憩の背景色
             width: 100,
@@ -311,15 +311,15 @@ const DragAndDropList: React.FC = () => {
   return (
     <>
       <div className="flex">
-        <div className="flex flex-grow">
-          {/* =============== sidebar ===================== */}
-          <div className="w-40 mr-5">
-            sidebar
-          </div>
-          {/* =============== sidebar ===================== */}
+        {/* =============== sidebar ===================== */}
+        <div className="w-[500px] mr-5">
+          sidebar
+        </div>
+        {/* =============== sidebar ===================== */}
 
-          {/* ================== main ===================== */}
-          <div className="flex-grow">
+        {/* ================== main ===================== */}
+        <div>
+          <div>
             <div className="bg-green-500 text-white py-4 px-6 my-2">
               <span className="mr-2">{formatDate(tours[0].beginDateTime)}</span>
             </div>
@@ -407,11 +407,11 @@ const DragAndDropList: React.FC = () => {
               </div>
             ))}
           </div>
-          {/* ================== main ===================== */}
+          <div className="flex justify-center gap-x-3">
+            {renderRestOperations()}
+          </div>
         </div>
-      </div>
-      <div className="flex justify-center gap-x-3">
-        {renderRestOperations()}
+        {/* ================== main ===================== */}
       </div>
     </>
   );
