@@ -3,3 +3,16 @@
 @tailwind utilities;
 
 
+.parent {
+  overflow-x: auto;
+}
+
+.content {
+  height: 100%;
+  white-space: nowrap;
+}
+
+.container {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
