@@ -267,7 +267,7 @@ const MainArea = () => {
             fontSize: '14px',
           }}
         >
-          {`${day > 0 ? `翌日` : ''}${hour}:00`}
+          {`${hour}:00`}
         </div>
       );
     }
@@ -319,7 +319,7 @@ const MainArea = () => {
 
   return (
     <>
-     <div>
+     <div className='max-w-[87%]'>
         <div>
           <div className="bg-green-500 text-white py-4 px-6 my-2">
             <span className="mr-2">{formatDate(tours[0].beginDateTime)}</span>
@@ -346,8 +346,8 @@ const MainArea = () => {
           </div>
 
           {/* ここだけスクロールしたい */}
-          <div className="container">
-            <div className="row">
+          <div className="">
+            <div className="">
               <div className="parent">
                 <div className="content">
                   <div className="flex">
@@ -358,11 +358,12 @@ const MainArea = () => {
                   </div>
                   {tours.map(tour => (
                     <div key={tour.tourId} className="flex mb-5">
+
                       <div
                         onDrop={e => handleDrop(e, tour.tourId)}
                         onDragOver={handleDragOver}
                         className="relative h-16 border-2 border-dashed border-gray-300 rounded-md flex justify-center items-center bg-gray-100"
-                        style={{ width: '200%' }}
+                        style={{ width: '3000px' }}
                       >
                         {tour.tourOperations.length === 0 ? (
                           <p className="text-gray-500">編集後に空白のツアーは削除されます。</p>
