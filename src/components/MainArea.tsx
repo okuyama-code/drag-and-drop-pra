@@ -115,6 +115,14 @@ const initialTours: TourDto[] = [
         operationEndDeate: '2024-04-19T20:00:00',
         carrierType: '4t',
       },
+      // 日付跨ぎのデータ作成
+      {
+        tourOperationId: 6,
+        operationType: 'LOCAL',
+        operationBeginDate: '2024-04-19T23:00:00',
+        operationEndDeate: '2024-04-20T01:00:00',
+        carrierType: '4t',
+      },
     ],
   },
 ];
@@ -349,7 +357,6 @@ const MainArea = () => {
             <div className='mt-[60px] w-[200px]'>
               {tours.map(tour => (
                   <div key={tour.tourId} className="flex mb-[57px] ">
-
                     <p className='text-xl'>{`ツアー ${tour.tourId}`}</p>
                   </div>
               ))}
