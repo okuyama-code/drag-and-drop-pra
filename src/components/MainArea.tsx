@@ -44,14 +44,12 @@ type LocationDto = {
   name: string
 };
 
-const initialRestTourOperation: TourOperationDto[] = [
-  { tourOperationId: 100, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
-  operationEndDeate: '2024-04-19T12:00:00' },
-  { tourOperationId: 101, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
-  operationEndDeate: '2024-04-19T12:00:00' },
-  { tourOperationId: 102, operationType: 'REST',  operationBeginDate: '2024-04-19T11:00:00',
-  operationEndDeate: '2024-04-19T12:00:00' },
-]
+const initialRestTourOperation: TourOperationDto = {
+  tourOperationId: 100,
+  operationType: 'REST',
+  operationBeginDate: '2024-04-19T11:00:00',
+  operationEndDeate: '2024-04-19T12:00:00'
+}
 
 const initialTours: TourDto[] = [
   {
@@ -115,6 +113,21 @@ const initialTours: TourDto[] = [
         operationEndDeate: '2024-04-19T20:00:00',
         carrierType: '4t',
       },
+      // 日付跨ぎのデータ作成
+      {
+        tourOperationId: 6,
+        operationType: 'LOCAL',
+        operationBeginDate: '2024-04-19T23:00:00',
+        operationEndDeate: '2024-04-20T01:00:00',
+        carrierType: '4t',
+      },
+      {
+        tourOperationId: 7,
+        operationType: 'LOCAL',
+        operationBeginDate: '2024-04-20T09:00:00',
+        operationEndDeate: '2024-04-20T13:00:00',
+        carrierType: '4t',
+      },
     ],
   },
 ];
@@ -123,7 +136,10 @@ const MainArea = () => {
   const [tours, setTours] = useState<TourDto[]>(initialTours);
   const [tourCount, setTourCount] = useState<number>(5);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [restOperations, setRestOperations] = useState<TourOperationDto[]>(initialRestTourOperation);
+  const [restOperation, setRestOperation] = useState<TourOperationDto>(initialRestTourOperation);
+
+  // console.log(restOperation)
+  console.log(tours)
 
   useEffect(() => {
     if (!isEditMode) {
@@ -143,21 +159,62 @@ const MainArea = () => {
     event.dataTransfer.setData('isRest', isRest.toString());
   };
 
-  const handleRestOperationDrop = (tourId: number, restOperationId: number) => {
-    const restOperationIndex = restOperations.findIndex(op => op.tourOperationId === restOperationId);
-    if (restOperationIndex === -1) return;
-
+  const handleRestOperationDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number) => {
+    event.preventDefault();
     const destinationTourIndex = tours.findIndex(t => t.tourId === tourId);
     if (destinationTourIndex === -1) return;
 
     const updatedTours = [...tours];
-    const movedRestOperation = { ...restOperations[restOperationIndex] };
+    const movedRestOperation = { ...restOperation };
+
+    // ユニークなランダムなIDを生成する
+    let newTourOperationId = Math.floor(Math.random() * 1000000);
+
+    // IDが重複しないように確認する
+    while (
+      updatedTours[destinationTourIndex].tourOperations.some(
+        op => op.tourOperationId === newTourOperationId
+      )
+    ) {
+      // 重複する場合は新しいIDを生成する
+      newTourOperationId = Math.floor(Math.random() * 1000000);
+    }
+
+    movedRestOperation.tourOperationId = newTourOperationId;
+
+    const containerRect = event.currentTarget.getBoundingClientRect();
+    const containerLeft = containerRect.left + window.pageXOffset;
+    const dropX = event.pageX - containerLeft;
+    const containerWidth = containerRect.width;
+    const dayDurationMs = 48 * 60 * 60 * 1000;
+    const startTimeMs = Math.round((dropX / containerWidth) * dayDurationMs / (30 * 60 * 1000)) * (30 * 60 * 1000);
+
+    const tourDate = new Date(tours[destinationTourIndex].beginDateTime);
+    let startTime = new Date(tourDate.getTime() + startTimeMs);
+    let endTime;
+
+    // ドロップした開始時間が23:30の場合は終了時間を翌日0:30に設定する
+    if (startTime.getHours() === 23 && startTime.getMinutes() === 30) {
+      const nextDay = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() + 1);
+      endTime = new Date(nextDay.getTime() + 30 * 60 * 1000); // 翌日0:30
+    } else {
+      endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
+    }
+
+    movedRestOperation.operationBeginDate = startTime.toISOString();
+    movedRestOperation.operationEndDeate = endTime.toISOString();
     updatedTours[destinationTourIndex].tourOperations.push(movedRestOperation);
+
     setTours(updatedTours);
 
-     // 元の休憩データを削除する
-    const updatedRestOperations = restOperations.filter(op => op.tourOperationId !== restOperationId);
-    setRestOperations(updatedRestOperations);
+    // 元の休憩データを更新する
+    const newRestOperation: TourOperationDto = {
+      tourOperationId: restOperation.tourOperationId,
+      operationType: 'REST',
+      operationBeginDate: restOperation.operationBeginDate,
+      operationEndDeate: restOperation.operationEndDeate,
+    };
+    setRestOperation(newRestOperation);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number) => {
@@ -179,7 +236,7 @@ const MainArea = () => {
       updatedTours[destinationTourIndex].tourOperations.push(movedOperation);
       setTours(updatedTours);
     } else {
-      handleRestOperationDrop(tourId, tourOperationId);
+      handleRestOperationDrop(event,tourId);
     }
 
     if (isRest) {
@@ -205,12 +262,14 @@ const MainArea = () => {
       const startTimeMs = Math.round((dropX / containerWidth) * dayDurationMs / (30 * 60 * 1000)) * (30 * 60 * 1000);
 
       let startTime = new Date(tourDate.getTime() + startTimeMs);
-      let endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
+      let endTime;
 
-      // 日付を跨いだ場合の処理
-      if (endTime.getDate() !== startTime.getDate()) {
-        const nextDay = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
-        endTime = new Date(nextDay.getTime());
+      // ドロップした開始時間が23:30の場合は終了時間を翌日0:30に設定する
+      if (startTime.getHours() === 23 && startTime.getMinutes() === 30) {
+        const nextDay = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() + 1);
+        endTime = new Date(nextDay.getTime() + 30 * 60 * 1000); // 翌日0:30
+      } else {
+        endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
       }
 
       const updatedOperation = {
@@ -279,42 +338,40 @@ const MainArea = () => {
   };
 
   const renderRestOperations = () => {
-    return restOperations.map(operation => {
-      const operationDuration =
-        new Date(operation.operationEndDeate).getTime() -
-        new Date(operation.operationBeginDate).getTime();
-      const operationStartTimePercentage =
-        (new Date(operation.operationBeginDate).getHours() * 60 +
-          new Date(operation.operationBeginDate).getMinutes()) /
-        (24 * 60) *
-        100;
-      const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
+    const operationDuration =
+      new Date(restOperation.operationEndDeate).getTime() -
+      new Date(restOperation.operationBeginDate).getTime();
+    const operationStartTimePercentage =
+      (new Date(restOperation.operationBeginDate).getHours() * 60 +
+        new Date(restOperation.operationBeginDate).getMinutes()) /
+      (24 * 60) *
+      100;
+    const operationWidthPercentage = (operationDuration / (24 * 60 * 60 * 1000)) * 100;
 
-      return (
-        <div
-          key={operation.tourOperationId}
-          className="text-white rounded shadow-md overflow-visible whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center mb-2"
-          style={{
-            backgroundColor: 'rgba(224, 118, 236, 0.8)', // 休憩の背景色
-            width: 100,
-            padding: '8px 16px',
-          }}
-          draggable={isEditMode}
-          onDragStart={e => handleDragStart(e, operation.tourOperationId, false, operation.operationType === 'REST')}
-        >
-          <div className="text-center">
-            <p>休憩</p>
-            {new Date(operation.operationBeginDate).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-          </div>
+    return (
+      <div
+        key={restOperation.tourOperationId}
+        className="text-white rounded shadow-md overflow-visible whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center mb-2"
+        style={{
+          backgroundColor: 'rgba(224, 118, 236, 0.8)',
+          width: 100,
+          padding: '8px 16px',
+        }}
+        draggable={isEditMode}
+        onDragStart={e => handleDragStart(e, restOperation.tourOperationId, false, restOperation.operationType === 'REST')}
+      >
+        <div className="text-center">
+          <p>休憩</p>
+          {new Date(restOperation.operationBeginDate).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })} - {new Date(restOperation.operationEndDeate).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
         </div>
-      );
-    });
+      </div>
+    );
   };
 
   return (
@@ -345,73 +402,83 @@ const MainArea = () => {
             </div>
           </div>
 
-          <div className="overflow-auto">
-            <div className="flex">
-              <div className="w-16"></div>
-              <div className="flex-grow relative h-12 flex items-center">
-                {renderTimeBlocks()}
-              </div>
+          <div className='flex'>
+            <div className='mt-[60px] w-[200px]'>
+              {tours.map(tour => (
+                  <div key={tour.tourId} className="flex mb-[57px] ">
+                    <p className='text-xl'>{`ツアー ${tour.tourId}`}</p>
+                  </div>
+              ))}
+
             </div>
-            {tours.map(tour => (
-              <div key={tour.tourId} className="flex mb-5 w-[2400px]">
-
-                <div
-                  onDrop={e => handleDrop(e, tour.tourId)}
-                  onDragOver={handleDragOver}
-                  className="relative h-16 border-2 border-dashed border-gray-300 rounded-md flex justify-center items-center bg-gray-100"
-                  style={{ width: '100%' }}
-                >
-                  {tour.tourOperations.length === 0 ? (
-                    <p className="text-gray-500">編集後に空白のツアーは削除されます。</p>
-                  ) : (
-                    tour.tourOperations.map(operation => {
-                      const operationStartTime = new Date(operation.operationBeginDate);
-                      const operationEndTime = new Date(operation.operationEndDeate);
-                      const tourStartTime = new Date(tour.beginDateTime);
-
-                      const operationStartHour = operationStartTime.getHours() + (operationStartTime.getDate() - tourStartTime.getDate()) * 24;
-                      const operationStartMinute = operationStartTime.getMinutes();
-                      const operationEndHour = operationEndTime.getHours() + (operationEndTime.getDate() - tourStartTime.getDate()) * 24;
-                      const operationEndMinute = operationEndTime.getMinutes();
-                      const totalHours = 48;
-
-                      const operationStartTimePercentage = ((operationStartHour + operationStartMinute / 60) / totalHours) * 100;
-                      const operationEndTimePercentage = ((operationEndHour + operationEndMinute / 60) / totalHours) * 100;
-                      const operationWidthPercentage = operationEndTimePercentage - operationStartTimePercentage;
-
-                      const backgroundColor =
-                        operation.operationType === 'REST'
-                          ? 'rgba(224, 118, 236, 0.8)'
-                          : operation.carrierType === '4t'
-                          ? 'rgba(0, 123, 255, 0.8)'
-                          : 'rgba(218, 136, 13, 0.8)';
-
-                      return (
-                        <div
-                          key={operation.tourOperationId}
-                          className="absolute text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center h-full"
-                          style={{
-                            left: `${operationStartTimePercentage}%`,
-                            width: `${operationWidthPercentage}%`,
-                            backgroundColor,
-                          }}
-                          draggable={isEditMode}
-                          onDragStart={e => handleDragStart(e, operation.tourOperationId, true, operation.operationType === 'REST')}
-                        >
-                          {new Date(operation.operationBeginDate).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </div>
-                      );
-                    })
-                  )}
+            <div className="overflow-auto">
+              <div className="flex">
+                <div className="w-16"></div>
+                <div className="flex-grow relative h-12 flex items-center">
+                  {renderTimeBlocks()}
                 </div>
               </div>
-            ))}
+              {tours.map(tour => (
+                <div key={tour.tourId} className="flex mb-5 w-[2400px]">
+
+                  <div
+                    onDrop={e => handleDrop(e, tour.tourId)}
+                    onDragOver={handleDragOver}
+                    className="relative h-16 border-2 border-dashed border-gray-300 rounded-md flex justify-center items-center bg-gray-100"
+                    style={{ width: '100%' }}
+                  >
+                    {tour.tourOperations.length === 0 ? (
+                      <p className="text-gray-500">編集後に空白のツアーは削除されます。</p>
+                    ) : (
+                      tour.tourOperations.map(operation => {
+                        const operationStartTime = new Date(operation.operationBeginDate);
+                        const operationEndTime = new Date(operation.operationEndDeate);
+                        const tourStartTime = new Date(tour.beginDateTime);
+
+                        const operationStartHour = operationStartTime.getHours() + (operationStartTime.getDate() - tourStartTime.getDate()) * 24;
+                        const operationStartMinute = operationStartTime.getMinutes();
+                        const operationEndHour = operationEndTime.getHours() + (operationEndTime.getDate() - tourStartTime.getDate()) * 24;
+                        const operationEndMinute = operationEndTime.getMinutes();
+                        const totalHours = 48;
+
+                        const operationStartTimePercentage = ((operationStartHour + operationStartMinute / 60) / totalHours) * 100;
+                        const operationEndTimePercentage = ((operationEndHour + operationEndMinute / 60) / totalHours) * 100;
+                        const operationWidthPercentage = operationEndTimePercentage - operationStartTimePercentage;
+
+                        const backgroundColor =
+                          operation.operationType === 'REST'
+                            ? 'rgba(224, 118, 236, 0.8)'
+                            : operation.carrierType === '4t'
+                            ? 'rgba(0, 123, 255, 0.8)'
+                            : 'rgba(218, 136, 13, 0.8)';
+
+                        return (
+                          <div
+                            key={operation.tourOperationId}
+                            className="absolute text-white rounded shadow-md overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer flex justify-center items-center h-full"
+                            style={{
+                              left: `${operationStartTimePercentage}%`,
+                              width: `${operationWidthPercentage}%`,
+                              backgroundColor,
+                            }}
+                            draggable={isEditMode}
+                            onDragStart={e => handleDragStart(e, operation.tourOperationId, true, operation.operationType === 'REST')}
+                          >
+                            {new Date(operation.operationBeginDate).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })} - {new Date(operation.operationEndDeate).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
