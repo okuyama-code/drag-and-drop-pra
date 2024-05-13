@@ -2,17 +2,3 @@
 @tailwind components;
 @tailwind utilities;
 
-
-.parent {
-  overflow-x: auto;
-}
-
-.content {
-  height: 100%;
-  white-space: nowrap;
-}
-
-.container_a {
-  overflow-y: auto;
-  overflow-x: hidden;
-}
