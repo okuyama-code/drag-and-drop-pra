@@ -138,8 +138,7 @@ const MainArea = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [restOperation, setRestOperation] = useState<TourOperationDto>(initialRestTourOperation);
 
-  // console.log(restOperation)
-  console.log(tours)
+  // console.log(tours)
 
   useEffect(() => {
     if (!isEditMode) {
@@ -193,9 +192,18 @@ const MainArea = () => {
     let startTime = new Date(tourDate.getTime() + startTimeMs);
     let endTime;
 
-    // ドロップした開始時間が23:30の場合は終了時間を翌日0:30に設定する
-    if (startTime.getHours() === 23 && startTime.getMinutes() === 30) {
-      const nextDay = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() + 1);
+    const prevDay = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 1);
+    const today = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate());
+    const nextDay = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() + 1);
+    const tourNextDay = tourDate.getDate() + 1
+
+    if (startTime.getDate() === tourNextDay && startTime.getHours() >= 23 ) {
+      startTime = new Date(today.getTime() + 23 * 60 * 60 * 1000);
+      endTime = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    } else if (startTime.getDate() === tourNextDay + 1) {
+      startTime = new Date(prevDay.getTime() + 23 * 60 * 60 * 1000);
+      endTime = new Date(prevDay.getTime() + 24 * 60 * 60 * 1000);
+    } else if (startTime.getHours() === 23 && startTime.getMinutes() === 30) {
       endTime = new Date(nextDay.getTime() + 30 * 60 * 1000); // 翌日0:30
     } else {
       endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
@@ -264,13 +272,22 @@ const MainArea = () => {
       let startTime = new Date(tourDate.getTime() + startTimeMs);
       let endTime;
 
-      // ドロップした開始時間が23:30の場合は終了時間を翌日0:30に設定する
-      if (startTime.getHours() === 23 && startTime.getMinutes() === 30) {
-        const nextDay = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() + 1);
-        endTime = new Date(nextDay.getTime() + 30 * 60 * 1000); // 翌日0:30
-      } else {
-        endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
-      }
+      const prevDay = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 1);
+      const today = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate());
+      const nextDay = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() + 1);
+      const tourNextDay = tourDate.getDate() + 1
+
+    if (startTime.getDate() === tourNextDay && startTime.getHours() >= 23 ) {
+      startTime = new Date(today.getTime() + 23 * 60 * 60 * 1000);
+      endTime = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    } else if (startTime.getDate() === tourNextDay + 1) {
+      startTime = new Date(prevDay.getTime() + 23 * 60 * 60 * 1000);
+      endTime = new Date(prevDay.getTime() + 24 * 60 * 60 * 1000);
+    } else if (startTime.getHours() === 23 && startTime.getMinutes() === 30) {
+      endTime = new Date(nextDay.getTime() + 30 * 60 * 1000); // 翌日0:30
+    } else {
+      endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1時間後
+    }
 
       const updatedOperation = {
         ...movedOperation,
