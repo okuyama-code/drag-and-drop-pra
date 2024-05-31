@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import MainArea from './components/MainArea';
+import AutoScroll from './components/AutoScroll';
 
 const DragAndDropList: React.FC = () => {
 
@@ -8,7 +9,7 @@ const DragAndDropList: React.FC = () => {
     <>
       <div className="flex">
         <Sidebar />
-        <MainArea />
+        <AutoScroll />
       </div>
     </>
   );
