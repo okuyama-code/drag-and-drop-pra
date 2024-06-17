@@ -39,7 +39,6 @@ const DragAndDropList: React.FC = () => {
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number, tourDate: Date) => {
     event.preventDefault();
   const operationId = Number(event.dataTransfer.getData('operationId'));
-  const isTour = event.dataTransfer.getData('isTour') === 'true';
   const dragPosition = event.dataTransfer.getData('dragPosition') as 'start' | 'end' | 'middle';
 
     const tourIndex = tours.findIndex(t => t.id === tourId);
