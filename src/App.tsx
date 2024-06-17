@@ -126,22 +126,30 @@ const DragAndDropList: React.FC = () => {
       // 操作の期間（ミリ秒）を計算します。
       const operationDuration = movedOperation.endTime.getTime() - movedOperation.startTime.getTime();
 
-      // 新しい開始時間を設定します。
-      updatedOperation.startTime = newStartTime;
+      // 操作の中心時間を計算します。
+      const operationCenterTime = movedOperation.startTime.getTime() + operationDuration / 2;
 
-      // 新しい終了時間を、開始時間に期間を加えて計算します（15分刻み）。
-      const newEndTime = new Date(newStartTime.getTime() + Math.floor(operationDuration / 900000) * 900000);
+      // ドロップ位置の時間を計算します。
+      const dropTime = new Date(beginDate.getTime() + startTimeMs);
+
+      // 新しい開始時間を、ドロップ位置の時間から操作の期間の半分を引いて計算します。
+      const newStartTime = new Date(dropTime.getTime() - operationDuration / 2);
+
+      // 新しい終了時間を、新しい開始時間に操作の期間を加えて計算します。
+      const newEndTime = new Date(newStartTime.getTime() + operationDuration);
 
       // 開始日時の2日後の00:00:00を計算
       const twoDateLater = new Date(beginDate);
       twoDateLater.setDate(beginDate.getDate() + 2);
       twoDateLater.setHours(0, 0, 0, 0);
 
-      // 新しい終了時間が開始日時の2日後の00:00:00を超える場合は、ドラッグ＆ドロップをキャンセル
-      if (newEndTime.getTime() > twoDateLater.getTime()) {
+      // 新しい開始時間が開始日時より前、または新しい終了時間が開始日時の2日後の00:00:00を超える場合は、ドラッグ＆ドロップをキャンセル
+      if (newStartTime < beginDate || newEndTime > twoDateLater) {
         return;
       }
 
+      // 新しい開始時間と終了時間を設定します。
+      updatedOperation.startTime = newStartTime;
       updatedOperation.endTime = newEndTime;
     }
 
@@ -293,64 +301,76 @@ const DragAndDropList: React.FC = () => {
                       operationEndTimePercentage - operationStartTimePercentage
 
 
-                    return (
-                      <div
-                        key={operation.id}
-                        style={{
-                          position: 'absolute',
-                          left: `${operationStartTimePercentage}%`,
-                          width: `${operationWidthPercentage}%`,
-                          background: '#007bff',
-                          color: '#fff',
-                          padding: '10px',
-                          borderRadius: '5px',
-                          boxShadow: '0 0 3px rgba(0,0,0,0.3)',
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                          textOverflow: 'ellipsis',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          height: '100%',
-                        }}
-                      >
+                      return (
                         <div
+                          key={operation.id}
                           style={{
                             position: 'absolute',
-                            left: '-5px',
-                            width: '10px',
+                            left: `${operationStartTimePercentage}%`,
+                            width: `${operationWidthPercentage}%`,
+                            background: '#007bff',
+                            color: '#fff',
+                            padding: '10px',
+                            borderRadius: '5px',
+                            boxShadow: '0 0 3px rgba(0,0,0,0.3)',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
                             height: '100%',
-                            background: 'rgba(255, 255, 255, 0.5)',
-                            cursor: 'ew-resize',
-                            zIndex: 1,
                           }}
-                          draggable
-                          onDragStart={e => handleDragStart(e, operation.id, 'start')}
-                        />
-                        <div
-                          style={{ flexGrow: 1, cursor: 'move' ,height: '100%',
-                        }}
-                          draggable
-                          onDragStart={e => handleDragStart(e, operation.id, 'middle')}
                         >
-                          {`${operation.startTime.toLocaleTimeString()} - ${operation.endTime.toLocaleTimeString()}`}
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: '-5px',
+                              width: '10px',
+                              height: '100%',
+                              background: 'rgba(255, 255, 255, 0.5)',
+                              cursor: 'ew-resize',
+                              zIndex: 1,
+                            }}
+                            draggable
+                            onDragStart={e => handleDragStart(e, operation.id, 'start')}
+                          />
+                          <div
+                            style={{ flexGrow: 1, cursor: 'move', height: '100%', position: 'relative' }}
+                            draggable
+                            onDragStart={e => handleDragStart(e, operation.id, 'middle')}
+                          >
+                            {`${operation.startTime.toLocaleTimeString()} - ${operation.endTime.toLocaleTimeString()}`}
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                height: '100%',
+                                width: '2px',
+                                background: 'rgba(255, 255, 255, 0.7)',
+                                zIndex: 1,
+                              }}
+                            />
+                          </div>
+                          <div
+                            style={{
+                              position: 'absolute',
+                              right: '-5px',
+                              width: '10px',
+                              height: '100%',
+                              background: 'rgba(255, 255, 255, 0.5)',
+                              cursor: 'ew-resize',
+                              zIndex: 1,
+                            }}
+                            draggable
+                            onDragStart={e => handleDragStart(e, operation.id, 'end')}
+                          />
                         </div>
-                        <div
-                          style={{
-                            position: 'absolute',
-                            right: '-5px',
-                            width: '10px',
-                            height: '100%',
-                            background: 'rgba(255, 255, 255, 0.5)',
-                            cursor: 'ew-resize',
-                            zIndex: 1,
-                          }}
-                          draggable
-                          onDragStart={e => handleDragStart(e, operation.id, 'end')}
-                        />
-                      </div>
-                    );
+                      );
+
                   })
                 }
               </div>
