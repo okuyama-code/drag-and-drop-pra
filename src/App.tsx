@@ -8,7 +8,6 @@ interface OperationData {
 
 interface Tour {
   id: number;
-  date: Date;
   operations: OperationData[];
 }
 
@@ -21,22 +20,23 @@ const initialOperationData: OperationData[] = [
 ];
 
 const initialTours: Tour[] = [
-  { id: 1, date: new Date('2024-04-19'), operations: [initialOperationData[0]] },
-  { id: 2, date: new Date('2024-04-19'), operations: [initialOperationData[1]] },
-  { id: 3, date: new Date('2024-04-19'), operations: [initialOperationData[2]] },
-  { id: 4, date: new Date('2024-04-19'), operations: [initialOperationData[3]] },
-  { id: 5, date: new Date('2024-04-19'), operations: [initialOperationData[4]] },
+  { id: 1, operations: [initialOperationData[0]] },
+  { id: 2, operations: [initialOperationData[1]] },
+  { id: 3, operations: [initialOperationData[2]] },
+  { id: 4, operations: [initialOperationData[3]] },
+  { id: 5, operations: [initialOperationData[4]] },
 ];
 
 const DragAndDropList: React.FC = () => {
   const [tours, setTours] = useState<Tour[]>(initialTours);
+  const [beginDate,] = useState<Date>(new Date('2024-04-18T15:00:00Z'))
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number, dragPosition: 'start' | 'end' | 'middle') => {
     event.dataTransfer.setData('operationId', id.toString());
     event.dataTransfer.setData('dragPosition', dragPosition);
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number, tourDate: Date) => {
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number) => {
     event.preventDefault();
     const operationId = Number(event.dataTransfer.getData('operationId'));
 
@@ -53,47 +53,60 @@ const DragAndDropList: React.FC = () => {
     // 操作が見つからない場合は、関数を終了します。
     if (operationIndex === -1) return;
 
-    // ツアー配列のコピーを作成します。
-    const updatedTours = [...tours];
     // 移動する操作を取得します。
-    const movedOperation = updatedTours[tourIndex].operations[operationIndex];
+    const movedOperation = tours[tourIndex].operations[operationIndex];
 
-    // ドロップ先の要素の位置とサイズを取得します。
-    const dropTarget = event.currentTarget.getBoundingClientRect();
+      // イベントが発生した要素の寸法と位置を取得
+    const containerRect = event.currentTarget.getBoundingClientRect();
 
-    // ドロップ位置のX座標から、ドロップ先の要素内での開始時間の割合を計算します。0 ~ 100までの値が横軸で表示される
-    const startTimePercentage = ((event.clientX - dropTarget.left) / dropTarget.width) * 100;
+    // 要素の左端の位置を計算（スクロール量を考慮）
+    // window.scrollX は現在の水平スクロール量を表す
+    const containerLeft = containerRect.left + window.scrollX;
 
-    // 開始時間の割合から、分単位の開始時間を計算します（15分刻み）。
-    const startMinutes = Math.round((startTimePercentage / 100) * 24 * 60 / 15) * 15;
+    // マウスのドロップ位置（X座標）から要素の左端の位置を引いて、要素内での相対的なドロップ位置を計算
+    const dropX = event.pageX - containerLeft;
 
-    // 開始時間の時間部分を計算します。
-    const startHour = Math.floor(startMinutes / 60);
+    // 要素の幅を取得
+    const containerWidth = containerRect.width;
 
-    // 開始時間の分部分を計算します。
-    const startMinute = startMinutes % 60;
+    // 48時間をミリ秒に変換（1日 = 24時間, 1時間 = 60分, 1分 = 60秒, 1秒 = 1000ミリ秒）
+    const dayDurationMs = 48 * 60 * 60 * 1000;
 
+    // ドロップ位置を時間に変換（15分刻み）
+    // dropX / containerWidth で要素内の相対的なドロップ位置を0から1の範囲で表す
+    // それに dayDurationMs を掛けることで、48時間内での相対的な時間を計算
+    // 計算結果を 15分（900,000ミリ秒）で割って切り捨て、再び掛けることで、15分刻みの時間に変換
+    const startTimeMs =
+      Math.round(
+        ((dropX / containerWidth) * dayDurationMs) / (15 * 60 * 1000)
+      ) *
+      (15 * 60 * 1000);
 
-    console.log('event.clientX')
-    console.log(event.clientX)
-    console.log('dropTarget')
-    console.log(dropTarget)
-    console.log('startTimePercentage')
-    console.log(startTimePercentage)
-    console.log('startMinutes')
-    console.log(startMinutes)
-    console.log('startHour')
-    console.log(startHour)
-    console.log('startMinute')
-    console.log(startMinute)
+    // 開始日時（beginDate）のミリ秒表現に、計算したドロップ位置の時間を加算して、新しい開始時間を計算
+    const newStartTime = new Date(beginDate.getTime() + startTimeMs);
+
+    console.log('containerRect')
+    console.log(containerRect)
+    console.log('containerLeft')
+    console.log(containerLeft)
+    console.log('window.scrollX')
+    console.log(window.scrollX)
+    console.log('dropX')
+    console.log(dropX)
+    console.log('containerWidth')
+    console.log(containerWidth)
+    console.log('dayDurationMs')
+    console.log(dayDurationMs)
+    console.log('startTimeMs')
+    console.log(startTimeMs)
+    console.log('newStartTime')
+    console.log(newStartTime)
 
     // 移動された操作の更新後のデータを格納するための変数を定義します。
     let updatedOperation: OperationData = { ...movedOperation };
 
     // ドラッグ位置が開始位置の場合の処理
     if (dragPosition === 'start') {
-      // 新しい開始時間を計算します。
-      const newStartTime = new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), startHour, startMinute);
       // 新しい開始時間が終了時間より前の場合のみ、開始時間を更新します。
       if (newStartTime < updatedOperation.endTime) {
         updatedOperation.startTime = newStartTime;
@@ -102,11 +115,9 @@ const DragAndDropList: React.FC = () => {
 
     // ドラッグ位置が終了位置の場合の処理
     if (dragPosition === 'end') {
-      // 新しい終了時間を計算します。
-      const newEndTime = new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), startHour, startMinute);
       // 新しい終了時間が開始時間より後の場合のみ、終了時間を更新します。
-      if (newEndTime > updatedOperation.startTime) {
-        updatedOperation.endTime = newEndTime;
+      if (newStartTime > updatedOperation.startTime) {
+        updatedOperation.endTime = newStartTime;
       }
     }
 
@@ -115,13 +126,24 @@ const DragAndDropList: React.FC = () => {
       // 操作の期間（ミリ秒）を計算します。
       const operationDuration = movedOperation.endTime.getTime() - movedOperation.startTime.getTime();
       // 新しい開始時間を設定します。
-      updatedOperation.startTime = new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), startHour, startMinute);
+      updatedOperation.startTime = newStartTime;
       // 新しい終了時間を、開始時間に期間を加えて計算します（15分刻み）。
-      updatedOperation.endTime = new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), startHour, startMinute + Math.floor(operationDuration / 60000 / 15) * 15);
+      updatedOperation.endTime = new Date(newStartTime.getTime() + Math.floor(operationDuration / 900000) * 900000);
     }
 
-    // 更新後のツアーデータに、更新された操作データを設定します。
-    updatedTours[tourIndex].operations[operationIndex] = updatedOperation;
+    // 更新後のツアーデータを新しい配列として作成します。
+    const updatedTours = tours.map((tour, index) => {
+      if (index === tourIndex) {
+        return {
+          ...tour,
+          operations: tour.operations.map((operation, index) =>
+            index === operationIndex ? updatedOperation : operation
+          ),
+        };
+      }
+      return tour;
+    });
+
     // ツアーデータの状態を更新します。
     setTours(updatedTours);
   };
@@ -206,30 +228,56 @@ const DragAndDropList: React.FC = () => {
             {renderTimeBlocks()}
           </div>
           {tours.map(tour => (
-            <div key={tour.id} style={{ marginBottom: '20px', position: 'relative' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                <h3>Tour {tour.id}</h3>
-              </div>
+            <div key={tour.id} className="flex mb-4 w-[2400px]">
               <div
-                onDrop={e => handleDrop(e, tour.id, tour.date)}
+                onDrop={e => handleDrop(e, tour.id)}
                 onDragOver={handleDragOver}
-                style={{
-                  position: 'relative',
-                  height: '100px',
-                  border: '2px dashed #ccc',
-                  borderRadius: '5px',
-                  marginTop: '10px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: '#f8f9fa',
-                }}
+                className="relative h-[74px] rounded-md w-full border-solid border-2 border-zinc-300"
               >
+                {Array.from({ length: 47 }, (_, i) => (
+                  <div
+                    key={i}
+                    className="absolute top-0 bottom-0"
+                    style={{
+                      left: `${((i + 1) / 48) * 100}%`,
+                      width: 'calc(100% / 48 - 10px)',
+                      borderLeft: '1px solid #ccc',
+                      borderRight:
+                        i === 46 ? 'none' : '10px solid transparent'
+                    }}
+                  />
+                ))}
                 {
                   tour.operations.map(operation => {
-                    const operationStartTimePercentage = (operation.startTime.getHours() * 60 + operation.startTime.getMinutes()) / (24 * 60) * 100;
-                    const operationEndTimePercentage = (operation.endTime.getHours() * 60 + operation.endTime.getMinutes()) / (24 * 60) * 100;
-                    const operationWidthPercentage = operationEndTimePercentage - operationStartTimePercentage;
+                    const operationStartTime = new Date(operation.startTime)
+                    const operationEndTime = new Date(operation.endTime)
+                    const tourStartTime = beginDate
+
+                    const operationStartTimestamp = operationStartTime.getTime()
+                    const operationEndTimestamp = operationEndTime.getTime()
+                    const tourStartTimestamp = tourStartTime.getTime()
+
+                    const operationStartHour = Math.floor(
+                      (operationStartTimestamp - tourStartTimestamp) / 3600000
+                    )
+                    const operationEndHour = Math.floor(
+                      (operationEndTimestamp - tourStartTimestamp) / 3600000
+                    )
+
+                    const operationStartMinute = operationStartTime.getMinutes()
+                    const operationEndMinute = operationEndTime.getMinutes()
+
+                    const totalHours = 48
+
+                    const operationStartTimePercentage =
+                      ((operationStartHour + operationStartMinute / 60) / totalHours) * 100
+
+                    const operationEndTimePercentage =
+                      ((operationEndHour + operationEndMinute / 60) / totalHours) * 100
+
+                    const operationWidthPercentage =
+                      operationEndTimePercentage - operationStartTimePercentage
+
 
                     return (
                       <div
