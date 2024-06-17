@@ -68,8 +68,7 @@ const DragAndDropList: React.FC = () => {
       if (operationIndex === -1) return;
 
       const operation = operations[operationIndex];
-      if (operation.date.toDateString() !== tourDate.toDateString()) return; // 開始日が違う操作は追加しない
-
+      if (operation.date.toDateString() !== tourDate.toDateString()) return;
       const tourIndex = tours.findIndex(t => t.id === tourId);
       if (tourIndex === -1) return;
 
@@ -91,29 +90,6 @@ const DragAndDropList: React.FC = () => {
     event.preventDefault();
   };
 
-  const handleRemoveFromTour = (tourId: number, operationId: number) => {
-    const tourIndex = tours.findIndex(t => t.id === tourId);
-    if (tourIndex === -1) return;
-
-    const operationIndex = tours[tourIndex].operations.findIndex(op => op.id === operationId);
-    if (operationIndex === -1) return;
-
-    const removedOperation = tours[tourIndex].operations.splice(operationIndex, 1)[0];
-    setTours([...tours]);
-
-    setOperations([...operations, removedOperation]);
-  };
-
-  const handleAddTour = (date: Date) => {
-    const newTour: Tour = { id: tourCount, date, operations: [] }; // ツアーに年月日を追加
-    setTours([...tours, newTour]);
-    setTourCount(prevCount => prevCount + 1);
-  };
-
-  const handleDeleteTour = (tourId: number) => {
-    const updatedTours = tours.filter(tour => tour.id !== tourId);
-    setTours(updatedTours);
-  };
 
   const renderTimeBlocks = () => {
     const timeBlocks = [];
@@ -131,37 +107,12 @@ const DragAndDropList: React.FC = () => {
     return timeBlocks;
   };
 
-   // 年月日ごとに操作をグループ化する
-   const groupedOperations: { [date: string]: OperationData[] } = {};
-   operations.forEach(operation => {
-     const key = operation.date.toDateString();
-     if (!groupedOperations[key]) {
-       groupedOperations[key] = [];
-     }
-     groupedOperations[key].push(operation);
-   });
-
    return (
     <>
       <div style={{ display: 'flex' }}>
 
         <div style={{ display: 'flex', flexDirection: 'column', marginRight: '10px', borderBottom: '1px solid #ccc' }}>
-          {Object.entries(groupedOperations).map(([date, ops]) => (
-            <div key={date} style={{ marginBottom: '20px' }}>
-              <h2>{date}</h2>
-              {ops.map(operation => (
-                <div
-                  key={operation.id}
-                  draggable
-                  onDragStart={e => handleDragStart(e, operation.id, false)}
-                  style={{ margin: '5px 0', padding: '5px', border: '1px solid #ccc', borderRadius: '5px' }}
-                >
-                  Operation: {operation.startTime.toLocaleTimeString()} - {operation.endTime.toLocaleTimeString()}
-                </div>
-              ))}
-              <button onClick={() => handleAddTour(new Date(date))}>Add Tour</button>
-            </div>
-          ))}
+
         </div>
 
         <div style={{ flexGrow: 1 }}>
@@ -172,7 +123,6 @@ const DragAndDropList: React.FC = () => {
             <div key={tour.id} style={{ marginBottom: '20px', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                 <h3>Tour {tour.id}</h3>
-                <button onClick={() => handleDeleteTour(tour.id)}>Delete Tour</button>
               </div>
               <div
                 onDrop={e => handleDrop(e, tour.id, tour.date)}
@@ -189,9 +139,7 @@ const DragAndDropList: React.FC = () => {
                   backgroundColor: '#f8f9fa',
                 }}
               >
-                {tour.operations.length === 0 ? (
-                  <p style={{ color: '#999' }}>Drag and drop operations here</p>
-                ) : (
+                {
                   tour.operations.map(operation => {
                     const operationDuration = operation.endTime.getTime() - operation.startTime.getTime();
                     const operationStartTimePercentage = (operation.startTime.getHours() * 60 + operation.startTime.getMinutes()) / (24 * 60) * 100;
@@ -219,13 +167,12 @@ const DragAndDropList: React.FC = () => {
                         }}
                         draggable
                         onDragStart={e => handleDragStart(e, operation.id, true)}
-                        onClick={() => handleRemoveFromTour(tour.id, operation.id)}
                       >
                         {`${operation.startTime.toLocaleTimeString()} - ${operation.endTime.toLocaleTimeString()}`}
                       </div>
                     );
                   })
-                )}
+                }
               </div>
             </div>
           ))}
