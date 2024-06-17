@@ -125,10 +125,24 @@ const DragAndDropList: React.FC = () => {
     if (dragPosition === 'middle') {
       // 操作の期間（ミリ秒）を計算します。
       const operationDuration = movedOperation.endTime.getTime() - movedOperation.startTime.getTime();
+
       // 新しい開始時間を設定します。
       updatedOperation.startTime = newStartTime;
+
       // 新しい終了時間を、開始時間に期間を加えて計算します（15分刻み）。
-      updatedOperation.endTime = new Date(newStartTime.getTime() + Math.floor(operationDuration / 900000) * 900000);
+      const newEndTime = new Date(newStartTime.getTime() + Math.floor(operationDuration / 900000) * 900000);
+
+      // 開始日時の2日後の00:00:00を計算
+      const twoDateLater = new Date(beginDate);
+      twoDateLater.setDate(beginDate.getDate() + 2);
+      twoDateLater.setHours(0, 0, 0, 0);
+
+      // 新しい終了時間が開始日時の2日後の00:00:00を超える場合は、ドラッグ＆ドロップをキャンセル
+      if (newEndTime.getTime() > twoDateLater.getTime()) {
+        return;
+      }
+
+      updatedOperation.endTime = newEndTime;
     }
 
     // 更新後のツアーデータを新しい配列として作成します。
