@@ -14,24 +14,24 @@ interface Tour {
 }
 
 const initialOperationData: OperationData[] = [
-  { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T08:00:00'), endTime: new Date('2024-04-19T10:00:00') },
-  { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T11:00:00'), endTime: new Date('2024-04-19T13:00:00') },
+  { id: 1, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T04:00:00'), endTime: new Date('2024-04-19T10:00:00') },
+  { id: 2, date: new Date('2024-04-19'), startTime: new Date('2024-04-19T03:00:00'), endTime: new Date('2024-04-19T13:00:00') },
   { id: 3, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T16:00:00') },
-  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T16:00:00'), endTime: new Date('2024-04-20T17:00:00') },
-  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T18:00:00'), endTime: new Date('2024-04-20T19:00:00') },
+  { id: 4, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T19:00:00') },
+  { id: 5, date: new Date('2024-04-19'), startTime: new Date('2024-04-20T14:00:00'), endTime: new Date('2024-04-20T19:00:00') },
 ];
 
 const initialTours: Tour[] = [
-  { id: 1, date: new Date('2024-04-19'), operations: [initialOperationData[0], initialOperationData[1]] },
-  { id: 2, date: new Date('2024-04-19'), operations: [initialOperationData[2]] },
-  { id: 3, date: new Date('2024-04-19'), operations: [initialOperationData[3]] },
-  { id: 4, date: new Date('2024-04-19'), operations: [initialOperationData[4]] },
+  { id: 1, date: new Date('2024-04-19'), operations: [initialOperationData[0]] },
+  { id: 2, date: new Date('2024-04-19'), operations: [initialOperationData[1]] },
+  { id: 3, date: new Date('2024-04-19'), operations: [initialOperationData[2]] },
+  { id: 4, date: new Date('2024-04-19'), operations: [initialOperationData[3]] },
+  { id: 5, date: new Date('2024-04-19'), operations: [initialOperationData[4]] },
 ];
 
 const DragAndDropList: React.FC = () => {
   const [operations, setOperations] = useState<OperationData[]>([]);
   const [tours, setTours] = useState<Tour[]>(initialTours);
-  const [tourCount, setTourCount] = useState<number>(5);
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number, isTour: boolean) => {
     event.dataTransfer.setData('operationId', id.toString());
@@ -40,29 +40,30 @@ const DragAndDropList: React.FC = () => {
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number, tourDate: Date) => {
     event.preventDefault();
-    const operationId = Number(event.dataTransfer.getData('operationId'));
-    const isTour = event.dataTransfer.getData('isTour') === 'true';
+  const operationId = Number(event.dataTransfer.getData('operationId'));
+  const isTour = event.dataTransfer.getData('isTour') === 'true';
 
-    if (isTour) {
-      const tourIndex = tours.findIndex(t => t.id === tourId);
-      if (tourIndex === -1) return;
+  if (isTour) {
+    const tourIndex = tours.findIndex(t => t.id === tourId);
+    if (tourIndex === -1) return;
 
-      const operationIndex = tours[tourIndex].operations.findIndex(op => op.id === operationId);
-      if (operationIndex === -1) return;
+    const operationIndex = tours[tourIndex].operations.findIndex(op => op.id === operationId);
+    if (operationIndex === -1) return;
 
-      const updatedTours = [...tours];
-      const movedOperation = updatedTours[tourIndex].operations[operationIndex];
-      const startTimePercentage = (event.nativeEvent.offsetX / event.currentTarget.clientWidth) * 100;
-      const startHour = Math.floor((startTimePercentage / 100) * 24);
-      const startMinute = Math.round((((startTimePercentage / 100) * 24) % 1) * 60);
-      const endTime = new Date(movedOperation.startTime.getTime() + (movedOperation.endTime.getTime() - movedOperation.startTime.getTime()));
-      const updatedOperation = {
-        ...movedOperation,
-        startTime: new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), startHour, startMinute),
-        endTime: new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), endTime.getHours(), endTime.getMinutes()),
-      };
-      updatedTours[tourIndex].operations[operationIndex] = updatedOperation;
-      setTours(updatedTours);
+    const updatedTours = [...tours];
+    const movedOperation = updatedTours[tourIndex].operations[operationIndex];
+    const startTimePercentage = (event.nativeEvent.offsetX / event.currentTarget.clientWidth) * 100;
+    const startMinutes = Math.round((startTimePercentage / 100) * 24 * 60 / 15) * 15;
+    const startHour = Math.floor(startMinutes / 60);
+    const startMinute = startMinutes % 60;
+    const operationDuration = movedOperation.endTime.getTime() - movedOperation.startTime.getTime();
+    const updatedOperation = {
+      ...movedOperation,
+      startTime: new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), startHour, startMinute),
+      endTime: new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate(), startHour, startMinute + Math.floor(operationDuration / 60000 / 15) * 15),
+    };
+    updatedTours[tourIndex].operations[operationIndex] = updatedOperation;
+    setTours(updatedTours);
     } else {
       const operationIndex = operations.findIndex(op => op.id === operationId);
       if (operationIndex === -1) return;
