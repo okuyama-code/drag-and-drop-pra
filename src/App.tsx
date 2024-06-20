@@ -31,30 +31,32 @@ const DragAndDropList: React.FC = () => {
   const [tours, setTours] = useState<Tour[]>(initialTours);
   const [beginDate,] = useState<Date>(new Date('2024-04-18T15:00:00Z'))
 
-  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number, dragPosition: 'start' | 'end' | 'middle') => {
+  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: number, tourId: number, dragPosition: 'start' | 'end' | 'middle') => {
     event.dataTransfer.setData('operationId', id.toString());
+    event.dataTransfer.setData('tourId', tourId.toString());
     event.dataTransfer.setData('dragPosition', dragPosition);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, tourId: number) => {
     event.preventDefault();
     const operationId = Number(event.dataTransfer.getData('operationId'));
-
-    // ドラッグ位置（開始、終了、中間）を取得します。
+    const sourceTourId = Number(event.dataTransfer.getData('tourId'));
     const dragPosition = event.dataTransfer.getData('dragPosition') as 'start' | 'end' | 'middle';
 
-    // ツアー配列内で、指定されたツアーIDに一致するツアーのインデックスを取得します。
-    const tourIndex = tours.findIndex(t => t.id === tourId);
-    // ツアーが見つからない場合は、関数を終了します。
-    if (tourIndex === -1) return;
+    // ドロップ先のツアーのインデックスを取得
+    const targetTourIndex = tours.findIndex(t => t.id === tourId);
+    if (targetTourIndex === -1) return;
 
-    // 指定されたツアー内の操作配列で、指定された操作IDに一致する操作のインデックスを取得します。
-    const operationIndex = tours[tourIndex].operations.findIndex(op => op.id === operationId);
-    // 操作が見つからない場合は、関数を終了します。
+    // ドラッグ元のツアーのインデックスを取得
+    const sourceTourIndex = tours.findIndex(t => t.id === sourceTourId);
+    if (sourceTourIndex === -1) return;
+
+    // ドラッグ元のツアー内の操作のインデックスを取得
+    const operationIndex = tours[sourceTourIndex].operations.findIndex(op => op.id === operationId);
     if (operationIndex === -1) return;
 
-    // 移動する操作を取得します。
-    const movedOperation = tours[tourIndex].operations[operationIndex];
+    // 移動する操作を取得
+    const movedOperation = tours[sourceTourIndex].operations[operationIndex];
 
       // イベントが発生した要素の寸法と位置を取得
     const containerRect = event.currentTarget.getBoundingClientRect();
@@ -84,23 +86,6 @@ const DragAndDropList: React.FC = () => {
 
     // 開始日時（beginDate）のミリ秒表現に、計算したドロップ位置の時間を加算して、新しい開始時間を計算
     const newStartTime = new Date(beginDate.getTime() + startTimeMs);
-
-    console.log('containerRect')
-    console.log(containerRect)
-    console.log('containerLeft')
-    console.log(containerLeft)
-    console.log('window.scrollX')
-    console.log(window.scrollX)
-    console.log('dropX')
-    console.log(dropX)
-    console.log('containerWidth')
-    console.log(containerWidth)
-    console.log('dayDurationMs')
-    console.log(dayDurationMs)
-    console.log('startTimeMs')
-    console.log(startTimeMs)
-    console.log('newStartTime')
-    console.log(newStartTime)
 
     // 移動された操作の更新後のデータを格納するための変数を定義します。
     let updatedOperation: OperationData = { ...movedOperation };
@@ -153,20 +138,41 @@ const DragAndDropList: React.FC = () => {
       updatedOperation.endTime = newEndTime;
     }
 
-    // 更新後のツアーデータを新しい配列として作成します。
+    // 更新後のツアーデータを新しい配列として作成
     const updatedTours = tours.map((tour, index) => {
-      if (index === tourIndex) {
+      // ドラッグ元のツアーの場合
+      if (index === sourceTourIndex) {
+        // ドラッグ元とドロップ先が異なるツアーの場合
+        if (sourceTourIndex !== targetTourIndex) {
+          // ドラッグ元のツアーから操作を削除
+          return {
+            ...tour,
+            operations: tour.operations.filter((_, i) => i !== operationIndex),
+          };
+        } else {
+          // ドラッグ元とドロップ先が同じツアーの場合
+          // 操作を更新（移動した操作の開始時間と終了時間を更新）
+          return {
+            ...tour,
+            operations: tour.operations.map((operation, i) =>
+              i === operationIndex ? updatedOperation : operation
+            ),
+          };
+        }
+      }
+      // ドロップ先のツアーの場合
+      else if (index === targetTourIndex) {
+        // ドロップ先のツアーに操作を追加
         return {
           ...tour,
-          operations: tour.operations.map((operation, index) =>
-            index === operationIndex ? updatedOperation : operation
-          ),
+          operations: [...tour.operations, updatedOperation],
         };
       }
+      // ドラッグ元でもドロップ先でもないツアーの場合
+      // ツアーを変更せずにそのまま返す
       return tour;
     });
-
-    // ツアーデータの状態を更新します。
+    // ツアーデータの状態を更新
     setTours(updatedTours);
   };
 
@@ -334,12 +340,12 @@ const DragAndDropList: React.FC = () => {
                               zIndex: 1,
                             }}
                             draggable
-                            onDragStart={e => handleDragStart(e, operation.id, 'start')}
+                            onDragStart={e => handleDragStart(e, operation.id, tour.id, 'start')}
                           />
                           <div
                             style={{ flexGrow: 1, cursor: 'move', height: '100%', position: 'relative' }}
                             draggable
-                            onDragStart={e => handleDragStart(e, operation.id, 'middle')}
+                            onDragStart={e => handleDragStart(e, operation.id, tour.id, 'middle')}
                           >
                             {`${operation.startTime.toLocaleTimeString()} - ${operation.endTime.toLocaleTimeString()}`}
                             <div
@@ -366,7 +372,7 @@ const DragAndDropList: React.FC = () => {
                               zIndex: 1,
                             }}
                             draggable
-                            onDragStart={e => handleDragStart(e, operation.id, 'end')}
+                            onDragStart={e => handleDragStart(e, operation.id, tour.id, 'end')}
                           />
                         </div>
                       );
